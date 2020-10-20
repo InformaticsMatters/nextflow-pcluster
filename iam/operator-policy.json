@@ -1,0 +1,34 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+             "Sid": "MinimumModify",
+             "Action": [
+                "autoscaling:UpdateAutoScalingGroup",
+                "batch:UpdateComputeEnvironment",
+                "cloudformation:DescribeStackEvents",
+                "cloudformation:DescribeStackResources",
+                "cloudformation:GetTemplate",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem"
+             ],
+             "Effect": "Allow",
+             "Resource": [
+                 "arn:aws:autoscaling:<REGION>:<AWS ACCOUNT ID>:autoScalingGroup:*:autoScalingGroupName/parallelcluster-*",
+                 "arn:aws:batch:<REGION>:<AWS ACCOUNT ID>:compute-environment/*",
+                 "arn:aws:cloudformation:<REGION>:<AWS ACCOUNT ID>:stack/<CLUSTERNAME>/*",
+                 "arn:aws:dynamodb:<REGION>:<AWS ACCOUNT ID>:table/<CLUSTERNAME>"
+             ]
+        },
+        {
+           "Sid": "Describe",
+           "Action": [
+                "cloudformation:DescribeStacks",
+                "ec2:DescribeInstances",
+                "ec2:DescribeInstanceStatus"
+           ],
+           "Effect": "Allow",
+           "Resource": "*"
+        }
+    ]
+}
