@@ -256,6 +256,10 @@ Once you're done, if you no longer need the cluster, delete it: -
     [...]    
     Cluster deleted successfully.
 
+>   It is always worth checking the AWS CloudFormation console to make
+    sure the stack responsible for the cluster has been deleted, and any
+    VPC that you expect to have ben deleted is also absent.
+
 ---
 
 [aws parallel cluster]: https://docs.aws.amazon.com/parallelcluster/index.html
