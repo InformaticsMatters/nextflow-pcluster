@@ -200,7 +200,6 @@ replacing `<CLUSTER_BUCKET>`with the name of your chosen bucket: -
     scaling_settings = default
     efs_settings = default
     post_install = https://<CLUSTER_BUCKET>.s3.amazonaws.com/post-install.sh
-    post_install_args = 'singularity'
 
 ## Create the cluster
 With configuration edited, create the cluster: - 
