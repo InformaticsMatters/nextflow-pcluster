@@ -167,7 +167,7 @@ saved to the local file `config`: -
     [...]
     Minimum cluster size (instances) [0]:
     Maximum cluster size (instances) [10]: 2
-    Master instance type [t2.micro]:
+    Master instance type [t2.micro]: t3a.medium
     Compute instance type [t2.micro]: m4.large
     Automate VPC creation? (y/n) [n]: y
     Network Configuration [Master in a public subnet and compute fleet in a private subnet]: 
