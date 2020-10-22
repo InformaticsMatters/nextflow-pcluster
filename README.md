@@ -245,6 +245,9 @@ which will create compute instances to run the workflow processes: -
     CPU hours   : (a few seconds)
     Succeeded   : 4
 
+>   An alternative (fast) connection mechanism, armed with the
+    Master's address, is `ssh -i ~/.ssh/nf-pcluster centos@<MASTER_ADDR>`.
+
 >   Initial execution of Nextflow will take some time as
     compute instances need to be instantiated (compute instances are created
     on-demand and, based on our configuration, retired automatically when idle
