@@ -145,7 +145,7 @@ separate `create` step.
 >   An example execution of the configuration step is illustrated below,
     of course you'll answer the questions in a way to suite your environment.
 
->   To date we have only tested using a Centos7 as the OS,
+>   To date we have only tested using a Centos7 and alinux2 as the OS,
     Slurm as the workload manager and a single work queue
 
 The wizard will prompt you with a number of questions. A typical set
@@ -167,7 +167,7 @@ Then run the configuration wizard: -
     [...]
     Scheduler [slurm]:
     [...]
-    Operating System [centos7]:
+    Operating System [alinux2]:
     [...]
     Minimum cluster size (instances) [0]:
     Maximum cluster size (instances) [10]: 2
