@@ -131,10 +131,14 @@ to it (the bucket's called `nf-pcluster` in this example) ensuring that the
 file's `acl` (Access Control List) permits `public-read`: -
 
     $ CLUSTER_BUCKET=nf-pcluster
-    $ aws s3 cp installation-scripts/centos-post-install.sh \
-        s3://${CLUSTER_BUCKET}/centos-post-install.sh \
+    $ CLUSTER_OS=amazon
+    $ aws s3 cp installation-scripts/${CLUSTER_OS}-post-install.sh \
+        s3://${CLUSTER_BUCKET}/${CLUSTER_OS}-post-install.sh \
         --acl public-read
-  
+
+>   There are post-installation scripts for amazon (Amazon Linux 2)
+    and centos (CentOS 7).
+
 ## Creating a cluster configuration
 We're all set to configure and create our cluster now.
 
@@ -199,12 +203,12 @@ Add the following new sections: -
     scaledown_idletime = 10
     
 And add this to the existing `[cluster default]` section,
-replacing `<CLUSTER_BUCKET>`with the name of your chosen post-installation
-bucket: -
+replacing `<CLUSTER_BUCKET>` and `<CLUSTE_OS>` with the name of your chosen
+post-installation bucket: -
 
     scaling_settings = default
     efs_settings = default
-    post_install = https://<CLUSTER_BUCKET>.s3.amazonaws.com/centos-post-install.sh
+    post_install = https://<CLUSTER_BUCKET>.s3.amazonaws.com/<CLUSTER_OS>-post-install.sh
 
 ## Create the cluster
 With configuration edited, create the cluster: - 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# ParallelCluster post-installation script for CentOS 7
+# ParallelCluster post-installation script for Amazon Linux 2
 
 echo "post-install script has $# arguments"
 for arg in "$@"
@@ -27,8 +27,8 @@ case "${cfn_node_type}" in
         cd $D
         mkdir -p /efs/singularity-cache
         mkdir -p /efs/work
-        mkdir -p /home/centos/.nextflow
-        cat <<EOF > /home/centos/.nextflow/config
+        mkdir -p /home/ec2-user/.nextflow
+        cat <<EOF > /home/ec2-user/.nextflow/config
 workDir = '/efs/work'
 process {
     executor = 'slurm'
@@ -39,7 +39,7 @@ singularity {
     cacheDir = '/efs/singularity-cache'
 }
 EOF
-         chown -R centos.centos /efs /home/centos/.nextflow
+         chown -R ec2-user.ec2-user /efs /home/ec2-user/.nextflow
     ;;
 
     ComputeFleet)
