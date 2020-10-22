@@ -18,9 +18,8 @@ Standard usage of these materials results in creating:
 -   Installs and configures Nextflow on the master node
 
 The installation process is highly configurable and can create variations
-of the standard usage. Parallel cluster uses a config file
-(`~/.parallelcluster/config` by default) where these
-configuration changes can be made.
+of the standard usage. Parallel cluster creates a config file
+where these configuration changes can be made.
 
 >   Consult the Parallel Cluster docs for full details.
 
@@ -67,11 +66,8 @@ private key block: -
 
 ### IAM User and Policies
 Using the AWS console (or CLI) create a user with access type
-**Programmatic access** and collect the name (`nf-pcluster` here), ID,
-access key and secret key.
-
-Set some convenient environment variables, ones we rely on in the following
-examples: -
+**Programmatic access** and set the name (`nf-pcluster` here) and your
+AWS ID here (replace the user ID with your AWS user ID): -
 
     $ CLUSTER_USER=nf-pcluster
     $ CLUSTER_USER_ID=427674407067
@@ -91,7 +87,8 @@ policy files (into the project root) using the following: -
     $ CLUSTER_NAME=nextflow
     $ ./render-policies.sh ${AWS_DEFAULT_REGION} ${CLUSTER_USER_ID} ${CLUSTER_NAME}
 
-You can install each of the policies using the AWS CLI: -
+Now install each of the policies using the AWS CLI. The policy names
+you choose must be unique for your account: -
     
     $ aws iam create-policy \
         --policy-name NextflowClusterInstancePolicy \
@@ -129,13 +126,13 @@ a default configuration file for Nextflow can be found in this repository's
 
 Use this script unless you have one of your own.
 
-Create an S3 bucket and upload `installation-scripts/post-install.sh`
+Create an S3 bucket and upload `installation-scripts/centos-post-install.sh`
 to it (the bucket's called `nf-pcluster` in this example) ensuring that the
 file's `acl` (Access Control List) permits `public-read`: -
 
     $ CLUSTER_BUCKET=nf-pcluster
-    $ aws s3 cp installation-scripts/post-install.sh \
-        s3://${CLUSTER_BUCKET}/post-install.sh \
+    $ aws s3 cp installation-scripts/centos-post-install.sh \
+        s3://${CLUSTER_BUCKET}/centos-post-install.sh \
         --acl public-read
   
 ## Creating a cluster configuration
@@ -152,8 +149,15 @@ separate `create` step.
     Slurm as the workload manager and a single work queue
 
 The wizard will prompt you with a number of questions. A typical set
-of responses is reproduced for convenience here. Here, the configuration is
-saved to the local file `config`: -
+of responses for a minimal cluster with auto-generated VPC is reproduced for
+convenience below. Here, the configuration is saved to the local file
+`config`.
+
+Remove any existing configuration file if it exists...
+
+    $ rm config
+    
+Then run the configuration wizard: -
 
     $ pcluster configure -c ./config
     [...]
@@ -175,16 +179,16 @@ saved to the local file `config`: -
     Beginning VPC creation. Please do not leave the terminal until the creation is finalized
     [...]
     The stack has been created
-    Configuration file written to ~/.parallelcluster/config
+    Configuration file written to [...]/config
 
->   If you're creating a VPC configuration will take a few minutes.
+>   If you're creating a VPC the configuration may take a few minutes.
     
-With the configuration complete, edit the resultant configuration file
-(saved locally in `./config`). We need to provide details of the post
-installation script and, in our case, EFS for shared storage between the
-cluster instances.
+Once complete, edit the resultant configuration file (in `./config`).
+We need to provide details of the post-installation script and, in our case,
+an EFS volume for shared storage between the cluster instances and a timer
+to shutdown idle instances.
 
-Add the following sections: -
+Add the following new sections: -
 
     [efs default]
     shared_dir = efs
@@ -195,11 +199,12 @@ Add the following sections: -
     scaledown_idletime = 10
     
 And add this to the existing `[cluster default]` section,
-replacing `<CLUSTER_BUCKET>`with the name of your chosen bucket: -
+replacing `<CLUSTER_BUCKET>`with the name of your chosen post-installation
+bucket: -
 
     scaling_settings = default
     efs_settings = default
-    post_install = https://<CLUSTER_BUCKET>.s3.amazonaws.com/post-install.sh
+    post_install = https://<CLUSTER_BUCKET>.s3.amazonaws.com/centos-post-install.sh
 
 ## Create the cluster
 With configuration edited, create the cluster: - 
@@ -212,7 +217,7 @@ With configuration edited, create the cluster: -
     ClusterUser: centos
     MasterPrivateIP: 10.0.0.179
 
->   The cluster formation may take 10 to 15 minutes
+>   It may take take 10 to 15 minutes before the cluster formation is complete
 
 ## Connect to the cluster
 Your cluster's created (well the _head node_ is). You can now use the CLI to
@@ -256,9 +261,12 @@ Once you're done, if you no longer need the cluster, delete it: -
     [...]    
     Cluster deleted successfully.
 
->   It is always worth checking the AWS CloudFormation console to make
-    sure the stack responsible for the cluster has been deleted, and any
-    VPC that you expect to have ben deleted is also absent.
+>   We've noticed that tearing-down the cluster may not always be successful
+    (observed October 2020) and manual intervention in the AWS CloudFormation
+    console was required. It is always worth checking the AWS CloudFormation
+    console to make sure the stack responsible for the cluster has been
+    deleted, and any VPC that you expect to have ben deleted is also absent
+    otherwise it my prevent you forming a new cluster.
 
 ---
 
