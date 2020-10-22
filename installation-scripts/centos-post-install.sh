@@ -37,6 +37,7 @@ process {
 singularity {
     enabled = true
     cacheDir = '/efs/singularity-cache'
+    autoMounts = true
 }
 EOF
          chown -R centos.centos /efs /home/centos/.nextflow

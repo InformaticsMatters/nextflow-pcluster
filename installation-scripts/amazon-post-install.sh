@@ -37,6 +37,7 @@ process {
 singularity {
     enabled = true
     cacheDir = '/efs/singularity-cache'
+    autoMounts = true
 }
 EOF
          chown -R ec2-user.ec2-user /efs /home/ec2-user/.nextflow
