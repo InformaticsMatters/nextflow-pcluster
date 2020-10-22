@@ -253,6 +253,13 @@ which will create compute instances to run the workflow processes: -
 
 Congratulations! You can now run Slurm-based Nextflow workflows!
 
+>   To execute our [fragmentation workflow] you may need the private copy of
+    the keypair used to create the cluster in the head-node's
+    `~/.ssh/${KEYPAIR_NAME}` directory. This will allow you to create the
+    database server (a separate EC2 instance) using the keypair you used to
+    create the cluster, remembering to set the head node's file permissions
+    correctly (i.e. `chmod 0600 ~/.ssh/${KEYPAIR_NAME}`)
+
 ## Deleting the cluster
 Once you're done, if you no longer need the cluster, delete it: -
 
@@ -271,6 +278,7 @@ Once you're done, if you no longer need the cluster, delete it: -
 ---
 
 [aws parallel cluster]: https://docs.aws.amazon.com/parallelcluster/index.html
+[fragmentation workflow]: https://github.com/InformaticsMatters/fragmentor
 [jq]: https://stedolan.github.io/jq/
 [nextflow]: https://www.nextflow.io/
 [parallelcluster policies]: https://docs.aws.amazon.com/parallelcluster/latest/ug/iam.html#parallelclusteruserpolicy-minimal-user
