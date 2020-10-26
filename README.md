@@ -1,6 +1,11 @@
 # Nextflow AWS ParallelCluster Configuration
 Material for the formation and use of an AWS (slurm-based) compute cluster.
 
+You'll need: -
+
+-   Python
+-   jq
+
 ## Overview
 These materials create a compute cluster on AWS running the a [Slurm] workload
 manager and sets up [Nextflow] to execute workflows.
@@ -33,13 +38,14 @@ below you typically: -
 4.  Repeat step 3 until done
 
 ## Getting started
-Start from a suitable (ideally Python 3.8 or better) virtual environment: -
+Start from a suitable (ideally Python 3.8 host or better)
+virtual environment: -
 
-    $ conda create -n nextflow-pcluster python=3.8
-    [...]
-    
-    $ conda activate nextflow-pcluster
-    $ pip install -r requirements.txt --upgrade
+    $ python -m venv ~/.venv/nextflow-pcluster
+ 
+    $ source ~/.venv/nextflow-pcluster/bin/activate
+    (nextflow-pcluster) $ pip install --upgrade pip
+    (nextflow-pcluster) $ pip install -r requirements.txt --upgrade
 
 ### Install jq
 [jq] is a convenient JSON query utility, it's useful to install it as some
