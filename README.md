@@ -14,11 +14,12 @@ Standard usage of these materials results in creating:
 -   A single master node in the public subnet
 -   An autoscaling group of worker nodes in the private subnet
 -   A shared EFS volume mounted at `/efs` on all master and worker nodes
--   Installs [Singularity] on all nodes when they are started
--   Installs and configures Nextflow on the master node
+-   A node post installation script that
+    -   Installs [Singularity] on all nodes when they are started
+    -   Installs and configures Nextflow on the master node
 
 The installation process is highly configurable and can create variations
-of the standard usage. Parallel cluster creates a config file
+of the standard usage. Parallel Cluster creates a config file
 where these configuration changes can be made.
 
 >   Consult the Parallel Cluster docs for full details.
@@ -48,15 +49,16 @@ commands illustrated here rely on it.
     jq-1.6
 
 ### Key-pairs
-As an AWS user with general administrative access, set you user credentials
-and default region for your intended cluster: -
+As an AWS user with general administrative access, set the user credentials
+and default region environment variables for your intended cluster: -
 
     $ export AWS_ACCESS_KEY_ID=????
     $ export AWS_SECRET_ACCESS_KEY=??????
     $ export AWS_DEFAULT_REGION=eu-central-1
 
-You will need to install a keypair on the account.
-Easily done with the `aws` CLI and `jq` to conveniently extract the
+You will need to install a keypair on the account. if you do not have one
+or would like to create once specifically for the cluster this can be
+easily done with the `aws` CLI and `jq` to conveniently extract the
 private key block: -
 
     $ KEYPAIR_NAME=nf-pcluster
@@ -65,24 +67,25 @@ private key block: -
         chmod 0600 ~/.ssh/${KEYPAIR_NAME} 
 
 ### IAM User and Policies
-Using the AWS console (or CLI) create a user with access type
-**Programmatic access** and set the name (`nf-pcluster` here) and your
-AWS ID here (replace the user ID with your AWS user ID): -
+Using the AWS console (or CLI) create a user you want to use with the cluster
+with access type **Programmatic access** and set the name
+(`nf-pcluster` in this example) and your AWS ID here (replace the user ID with
+your AWS user ID): -
 
     $ CLUSTER_USER=nf-pcluster
     $ CLUSTER_USER_ID=427674407067
 
-We now create and attach suitable policies to the user.
+We now create **Policies** in AWS and then attach them to the cluster user.
 
-The user's policies must include the the those defined in the `iam`
-directory, as defined in the AWS [ParallelCluster Policies] documentation.
+>   The user's policies must include the the those defined in the `iam`
+    directory, as defined in the AWS [ParallelCluster Policies] documentation.
 
 >   Copies of the policies exist in this repository along with a shell-script
     to rapidly adapt them for the user and cluster you're going to create.
 
-Given a region, user account ID (of a user with programmatic access you'll
-use to create the cluster) and indented cluster name you can render the
-policy files (into the project root) using the following: -
+Given a region, user account ID and a name you want to use to refer to your
+cluster you can render the repository's copy of the reference policy files 
+using the following command: -
 
     $ CLUSTER_NAME=nextflow
     $ ./render-policies.sh ${AWS_DEFAULT_REGION} ${CLUSTER_USER_ID} ${CLUSTER_NAME}
@@ -119,16 +122,23 @@ Now, again using the AWS CLI, attach the policies to your chosen AWS user: -
 
 ### Upload installation scripts
 Part of cluster formation permits the execution of installation scripts
-that are pulled from AWS S3 as cluster compute instances are formed. An
-example _post-installation_ script that prepares directories, singularity and
+that are pulled from AWS S3 as cluster compute instances are formed. Example
+_post-installation_ scripts that prepare directories, singularity and
 a default configuration file for Nextflow can be found in this repository's
 `installation-scripts` directory.
 
-Use this script unless you have one of your own.
+Use one of these scripts unless you have one of your own.
 
-Create an S3 bucket and upload `installation-scripts/centos-post-install.sh`
-to it (the bucket's called `nf-pcluster` in this example) ensuring that the
-file's `acl` (Access Control List) permits `public-read`: -
+>   At the time of writing there are post-installation scripts for amazon
+    (Amazon Linux 2) and centos (CentOS 7).
+
+>   For this example we're going to create a cluster based on the
+    **Amazon Linux 2** machine image.
+
+Create an S3 bucket and upload the post-installation script for your
+chosen image to it (the bucket's called `nf-pcluster` in this example).
+Here we ensure that the file's `acl` (Access Control List)
+permits `public-read`: -
 
     $ CLUSTER_BUCKET=nf-pcluster
     $ CLUSTER_OS=amazon
@@ -136,20 +146,18 @@ file's `acl` (Access Control List) permits `public-read`: -
         s3://${CLUSTER_BUCKET}/${CLUSTER_OS}-post-install.sh \
         --acl public-read
 
->   There are post-installation scripts for amazon (Amazon Linux 2)
-    and centos (CentOS 7).
-
 ## Creating a cluster configuration
-We're all set to configure and create our cluster now.
+With the preparation work done we're all set to configure and create a cluster.
 
 We use the `pcluster configure` command's interactive wizard to define our
-cluster. This command simply creates a configuration that is used by a
+cluster. This command creates a configuration file that is used by a
 separate `create` step.
 
 >   An example execution of the configuration step is illustrated below,
-    of course you'll answer the questions in a way to suite your environment.
+    of course you'll answer the questions in a way that satisfies
+    your environment.
 
->   To date we have only tested using a Centos7 and alinux2 as the OS,
+>   To date we have only tested using a Centos7 and Amazon Linux 2 as the OS,
     Slurm as the workload manager and a single work queue
 
 The wizard will prompt you with a number of questions. A typical set
@@ -188,6 +196,7 @@ Then run the configuration wizard: -
 >   If you're creating a VPC the configuration may take a few minutes.
     
 Once complete, edit the resultant configuration file (in `./config`).
+
 We need to provide details of the post-installation script and, in our case,
 an EFS volume for shared storage between the cluster instances and a timer
 to shutdown idle instances.
@@ -225,9 +234,9 @@ With configuration edited, create the cluster: -
 
 ## Connect to the cluster
 Your cluster's created (well the _head node_ is). You can now use the CLI to
-connect to the head node using the SSH key you created earlier and make sure
-Nextflow is correctly installed by running the classic _hello_ workflow,
-which will create compute instances to run the workflow processes: -
+connect to the head node using the SSH key you created earlier. Here we just
+make sure Nextflow is correctly installed by running the classic _hello_
+workflow, which will create compute instances to run the workflow processes: -
 
     $ pcluster ssh ${CLUSTER_NAME} -i ~/.ssh/${KEYPAIR_NAME}
     [...]
@@ -249,14 +258,11 @@ which will create compute instances to run the workflow processes: -
     CPU hours   : (a few seconds)
     Succeeded   : 4
 
->   An alternative (fast) connection mechanism, armed with the
-    Master's address, is `ssh -i ~/.ssh/nf-pcluster centos@<MASTER_ADDR>`.
-
 >   Initial execution of Nextflow will take some time as
     compute instances need to be instantiated (compute instances are created
-    on-demand and, based on our configuration, retired automatically when idle
+    on-demand and, in our configuration, retired automatically when idle
     for 10 minutes) as well as the download of Nextflow dependent modules
-    and conversion of the required process container image to Singularity. 
+    and conversion of the required Docker container image to Singularity. 
 
 Congratulations! You can now run Slurm-based Nextflow workflows!
 
@@ -266,6 +272,10 @@ Congratulations! You can now run Slurm-based Nextflow workflows!
     database server (a separate EC2 instance) using the keypair you used to
     create the cluster, remembering to set the head node's file permissions
     correctly (i.e. `chmod 0600 ~/.ssh/${KEYPAIR_NAME}`)
+
+>   An alternative (fast) SSH connection mechanism, armed with the
+    Master's address and private key-pari, is
+    `ssh -i ~/.ssh/nf-pcluster centos@<MASTER_ADDR>`.
 
 ## Deleting the cluster
 Once you're done, if you no longer need the cluster, delete it: -
@@ -279,8 +289,12 @@ Once you're done, if you no longer need the cluster, delete it: -
     (observed October 2020) and manual intervention in the AWS CloudFormation
     console was required. It is always worth checking the AWS CloudFormation
     console to make sure the stack responsible for the cluster has been
-    deleted, and any VPC that you expect to have ben deleted is also absent
-    otherwise it my prevent you forming a new cluster.
+    deleted.
+
+Tearing down the cluster does not delete the cluster's VPC. If you allowed
+`pcluster` to create the VPC automatically you will need to
+remove this yourself using the AWS console (or you can leave it and re-use
+it next time).
 
 ---
 
