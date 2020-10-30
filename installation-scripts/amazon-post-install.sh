@@ -32,12 +32,16 @@ case "${cfn_node_type}" in
 workDir = '/efs/work'
 process {
     executor = 'slurm'
-    container = 'busybox:latest'
+    container = 'centos:7'
 }
 singularity {
     enabled = true
     cacheDir = '/efs/singularity-cache'
     autoMounts = true
+}
+executor {
+    // default queue size is 100. Increase if >100 cores available
+    queueSize = 100
 }
 EOF
          chown -R ec2-user.ec2-user /efs /home/ec2-user/.nextflow

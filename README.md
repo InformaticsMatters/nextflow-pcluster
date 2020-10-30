@@ -36,6 +36,7 @@ below you typically: -
 2.  Create a cluster
 3.  Connect (SSH) to the cluster head node and run your Nextflow workflow
 4.  Repeat step 3 until done
+5.  Delete the cluster to avoid AWS charges 
 
 ## Getting started
 Start from a suitable (ideally Python 3.8 host or better)
@@ -83,7 +84,7 @@ your AWS user ID): -
 
 We now create **Policies** in AWS and then attach them to the cluster user.
 
->   The user's policies must include the the those defined in the `iam`
+>   The user's policies must include those defined in the `iam`
     directory, as defined in the AWS [ParallelCluster Policies] documentation.
 
 >   Copies of the policies exist in this repository along with a shell-script
@@ -125,13 +126,22 @@ Now, again using the AWS CLI, attach the policies to your chosen AWS user: -
     $ aws iam attach-user-policy \
         --policy-arn arn:aws:iam::${CLUSTER_USER_ID}:policy/NextflowClusterOperatorPolicy \
         --user-name ${CLUSTER_USER}
+        
+**Note**: those policies defined by AWS do not include everything that is needed. We are working on amending this.
+In particular is seems that the permissions do NOT allow:
+* Creation of a VPC in the `pcluster configure` step
+* Use of spot instances
+
 
 ### Upload installation scripts
 Part of cluster formation permits the execution of installation scripts
-that are pulled from AWS S3 as cluster compute instances are formed. Example
+that are pulled from AWS S3 as cluster compute instances are created. Example
 _post-installation_ scripts that prepare directories, singularity and
 a default configuration file for Nextflow can be found in this repository's
 `installation-scripts` directory.
+
+Note that you might want to further customise the file that gets created at
+`/home/centos/.nextflow/config`.
 
 Use one of these scripts unless you have one of your own.
 
@@ -201,7 +211,7 @@ Then run the configuration wizard: -
 
 >   If you're creating a VPC the configuration may take a few minutes.
     
-Once complete, edit the resultant configuration file (in `./config`).
+Once complete, edit the resultant configuration file (in `~/.parallelcluster/config`).
 
 We need to provide details of the post-installation script and, in our case,
 an EFS volume for shared storage between the cluster instances and a timer
@@ -233,10 +243,10 @@ With configuration edited, create the cluster: -
     [...]
     Creating stack named: parallelcluster-nextflow
     Status: parallelcluster-nextflow - CREATE_COMPLETE                              
-    ClusterUser: centos
+    ClusterUser: ec2-user
     MasterPrivateIP: 10.0.0.179
 
->   It may take take 10 to 15 minutes before the cluster formation is complete
+>   It may take 10 to 15 minutes before the cluster formation is complete
 
 ## Connect to the cluster
 Your cluster's created (well the _head node_ is). You can now use the CLI to
@@ -301,6 +311,17 @@ Tearing down the cluster does not delete the cluster's VPC. If you allowed
 `pcluster` to create the VPC automatically you will need to
 remove this yourself using the AWS console (or you can leave it and re-use
 it next time).
+
+## Nexflow tips
+
+By default Nextflow is configured to use `/efs/work` as its work directory (where intermediate results are located).
+You will need to delete the contents of this directory once your workflows are complete to avoid it continually
+increasing in size (and incur ever increasing charges!). the location of the work dir can be changed by editing the 
+`/home/centos/.nextflow/config` file or creating a local config file named `nextflow.config` in your current directory.
+
+By default Nextflow is configured with queue size of 100. If your cluster can cope with more that 100 concurrent jobs
+(typically this means you hve more than 100 CPU cores) you will want to increase this value. It is defined in the
+nextflow config file as described above.
 
 ---
 
