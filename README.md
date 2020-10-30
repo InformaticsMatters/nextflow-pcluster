@@ -320,7 +320,7 @@ increasing in size (and incur ever increasing charges!). the location of the wor
 `/home/centos/.nextflow/config` file or creating a local config file named `nextflow.config` in your current directory.
 
 By default Nextflow is configured with queue size of 100. If your cluster can cope with more that 100 concurrent jobs
-(typically this means you hve more than 100 CPU cores) you will want to increase this value. It is defined in the
+(typically this means you have more than 100 CPU cores) you will want to increase this value. It is defined in the
 nextflow config file as described above.
 
 ---
