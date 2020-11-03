@@ -5,6 +5,7 @@ You'll need: -
 
 -   Python
 -   jq
+-   An AWS user with general administrative access
 
 ## Overview
 These materials create a compute cluster on AWS running the a [Slurm] workload
@@ -47,6 +48,9 @@ virtual environment: -
     $ source ~/.venv/nextflow-pcluster/bin/activate
     (nextflow-pcluster) $ pip install --upgrade pip
     (nextflow-pcluster) $ pip install -r requirements.txt --upgrade
+    
+    $ aws --version
+    aws-cli/1.18.170 Python/3.7.6 Darwin/19.6.0 botocore/1.19.10
 
 ### Install jq
 [jq] is a convenient JSON query utility, it's useful to install it as some
@@ -55,7 +59,7 @@ commands illustrated here rely on it.
     $ jq --version
     jq-1.6
 
-### Key-pairs
+### EC2 key-pair
 As an AWS user with general administrative access, set the user credentials
 and default region environment variables for your intended cluster: -
 
@@ -75,12 +79,18 @@ private key block: -
 
 ### IAM User and Policies
 Using the AWS console (or CLI) create a user you want to use with the cluster
-with access type **Programmatic access** and set the name
-(`nf-pcluster` in this example) and your AWS ID here (replace the user ID with
-your AWS user ID): -
+with an "Access type" of **Programmatic access**. You do not need to set any
+"Permissions" or "tags", just click-through these and click **Create user**.
+
+You will be presented with the user's **Access Key Id** and an opportunity
+to view the **Secret access key**. Make a record of these before Closing the
+"Add user" screen.
+
+Set some convenient variables, that we'll use later. Namely the created user
+name and your AWS ID (replace the user ID shown below with your AWS user ID): -
 
     $ CLUSTER_USER=nf-pcluster
-    $ CLUSTER_USER_ID=427674407067
+    $ CLUSTER_USER_ID=000000000000
 
 We now create **Policies** in AWS and then attach them to the cluster user.
 
@@ -112,7 +122,6 @@ you choose must be unique for your account: -
         --policy-name NextflowClusterOperatorPolicy \
         --policy-document file://nf-operator-policy.json
 
-     
 Now, again using the AWS CLI, attach the policies to your chosen AWS user: -
 
     $ aws iam attach-user-policy \
@@ -127,11 +136,8 @@ Now, again using the AWS CLI, attach the policies to your chosen AWS user: -
         --policy-arn arn:aws:iam::${CLUSTER_USER_ID}:policy/NextflowClusterOperatorPolicy \
         --user-name ${CLUSTER_USER}
         
-**Note**: those policies defined by AWS do not include everything that is needed. We are working on amending this.
-In particular is seems that the permissions do NOT allow:
-* Creation of a VPC in the `pcluster configure` step
-* Use of spot instances
-
+>   **Note**: Those policies defined by AWS do not include rules
+    to permit the use of spot instances but we are working on a solution.
 
 ### Upload installation scripts
 Part of cluster formation permits the execution of installation scripts
@@ -202,6 +208,7 @@ Then run the configuration wizard: -
     Master instance type [t2.micro]: t3a.medium
     Compute instance type [t2.micro]: m4.large
     Automate VPC creation? (y/n) [n]: y
+    [...]
     Network Configuration [Master in a public subnet and compute fleet in a private subnet]: 
     [...]
     Beginning VPC creation. Please do not leave the terminal until the creation is finalized
@@ -217,26 +224,29 @@ We need to provide details of the post-installation script and, in our case,
 an EFS volume for shared storage between the cluster instances and a timer
 to shutdown idle instances.
 
-Add the following new sections: -
+Add the following new sections to the end of the `config` file: -
 
-    [efs default]
-    shared_dir = efs
-    encrypted = false
-    performance_mode = generalPurpose
-    
-    [scaling default]
-    scaledown_idletime = 10
-    
-And add this to the existing `[cluster default]` section,
-replacing `<CLUSTER_BUCKET>` and `<CLUSTE_OS>` with the name of your chosen
-post-installation bucket: -
+```ini
+[efs default]
+shared_dir = efs
+encrypted = false
+performance_mode = generalPurpose
 
-    scaling_settings = default
-    efs_settings = default
-    post_install = https://<CLUSTER_BUCKET>.s3.amazonaws.com/<CLUSTER_OS>-post-install.sh
+[scaling default]
+scaledown_idletime = 10
+```
+    
+And add the following to the existing `[cluster default]` section,
+replacing `<CLUSTER_BUCKET>` and `<CLUSTER_OS>` with the values you used: -
+
+```ini
+scaling_settings = default
+efs_settings = default
+post_install = https://<CLUSTER_BUCKET>.s3.amazonaws.com/<CLUSTER_OS>-post-install.sh
+```
 
 ## Create the cluster
-With configuration edited, create the cluster: - 
+With configuration edited you can create the cluster: - 
 
     $ pcluster create -c ./config ${CLUSTER_NAME}
     Beginning cluster creation for cluster: nextflow
@@ -246,7 +256,7 @@ With configuration edited, create the cluster: -
     ClusterUser: ec2-user
     MasterPrivateIP: 10.0.0.179
 
->   It may take 10 to 15 minutes before the cluster formation is complete
+>   Allow 10 to 15 minutes for cluster formation to finish
 
 ## Connect to the cluster
 Your cluster's created (well the _head node_ is). You can now use the CLI to
