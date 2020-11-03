@@ -56,16 +56,18 @@ Start from a suitable virtual environment
     jq-1.6
 
 ### EC2 key-pair
-As an AWS user with general administrative access, set the user credentials
-and default region environment variables for your intended cluster: -
+If you have an existing SSH keypair on the AWS account you can skip this step.
+
+If you do not have a pre-existing keypair, as an AWS user with general
+administrative access, set the user credentials and default region environment
+variables for your intended cluster: -
 
     $ export AWS_ACCESS_KEY_ID=????
     $ export AWS_SECRET_ACCESS_KEY=??????
     $ export AWS_DEFAULT_REGION=eu-central-1
 
-You will need to install a keypair on the account. if you do not have one
-or would like to create once specifically for the cluster this can be
-easily done with the `aws` CLI and `jq` to conveniently extract the
+...and create a keypair on the account, which can be easily done
+with the `aws` CLI and `jq` to conveniently extract and write the
 private key block: -
 
     $ KEYPAIR_NAME=nextflow-pcluster
@@ -119,6 +121,10 @@ you choose must be unique for your account: -
         --policy-name NextflowClusterOperatorPolicy \
         --policy-document file://nf-operator-policy.json
 
+    $ aws iam create-policy \
+        --policy-name NextflowClusterUserPatchPolicy \
+        --policy-document file://iam/user-patch-policy.json
+
 Now, again using the AWS CLI, attach the policies to your chosen AWS role: -
 
     $ aws iam attach-role-policy \
@@ -132,9 +138,12 @@ Now, again using the AWS CLI, attach the policies to your chosen AWS role: -
     $ aws iam attach-role-policy \
         --policy-arn arn:aws:iam::${CLUSTER_ACCOUNT_ID}:policy/NextflowClusterOperatorPolicy \
         --role-name ${CLUSTER_ROLE_NAME}
+
+>   The NextflowClusterUserPatchPolicy is used for an optional IAM user
+    described later and is not attached to the Role.
         
 >   **Note**: Those policies defined by AWS do not include rules
-    to permit VPC creation the use of spot instances but we are working on
+    to permit the use of spot instances but we are working on
     a solution.
 
 ### Upload installation scripts
@@ -166,6 +175,44 @@ permits `public-read`: -
         s3://${CLUSTER_BUCKET}/${CLUSTER_OS}-post-install.sh \
         --acl public-read
 
+## Creating a cluster configuration user
+From this point on we will be running the `pcluster` command-line utility
+to configure and manage the actual cluster. All we've done so far is
+prepare the ground for the formation of the cluster.
+
+If you have an AWS IAM User with *AdministratorAccess* and you are happy
+to use that user then there's nothing more to do except move on to the next
+section - **Creating a cluster configuration**.
+
+>   You will still need a user with *AdministratorAccess* in this step.
+
+But, if you do not have access to a User with *AdministratorAccess* then you
+need to create one now and attach suitable policies.
+
+Firstly, in the AWS console, create a new user with **Programmatic access**
+in your AWS account. Something like `nextflow-pcluster`
+(or select an existing user)
+ 
+>   There is no need to add any policies to the user but you must record
+    the newly assigned **Access key ID** and **Secret access key** before
+    closing the final window. If you forget you can always create another
+    access key later.
+
+Now, attach suitable policies to the user, present and pre-rendered here
+in earlier steps: -
+
+    $ CLUSTER_USER_NAME=nextflow-pcluster
+
+    $ aws iam attach-user-policy \
+        --policy-arn arn:aws:iam::${CLUSTER_ACCOUNT_ID}:policy/NextflowClusterUserPolicy \
+        --user-name ${CLUSTER_USER_NAME}
+
+    $ aws iam attach-user-policy \
+        --policy-arn arn:aws:iam::${CLUSTER_ACCOUNT_ID}:policy/NextflowClusterUserPatchPolicy \
+        --user-name ${CLUSTER_USER_NAME}
+
+The user credentials can now be used in the next step to configure the cluster.
+
 ## Creating a cluster configuration
 With the preparation work done we're all set to configure and create a cluster.
 
@@ -185,6 +232,17 @@ of responses for a minimal cluster with auto-generated VPC is reproduced for
 convenience below. Here, the configuration is saved to the local file
 `config`.
 
+Firstly, set the AWS credentials for your chosen user. These will be the
+credentials for either a user with *AdministratorAccess* privileges or the
+user you created in the previous section. Set the appropriate credentials: -
+
+    $ export AWS_ACCESS_KEY_ID=????
+    $ export AWS_SECRET_ACCESS_KEY=??????
+    $ export AWS_DEFAULT_REGION=eu-central-1
+
+>   From this point you're running the `pcluster` commands as either a new user
+    with limited policies or as a user with *AdministratorAccess*.
+ 
 Remove any existing configuration file if it exists...
 
     $ rm config
@@ -314,6 +372,8 @@ Once you're done, if you no longer need the cluster, delete it: -
     [...]    
     Cluster deleted successfully.
 
+>   Be careful with this command - it does not ask "Are you sure?".
+
 >   We've noticed that tearing-down the cluster may not always be successful
     (observed October 2020) and manual intervention in the AWS CloudFormation
     console was required. It is always worth checking the AWS CloudFormation
@@ -325,7 +385,7 @@ Tearing down the cluster does not delete the cluster's VPC. If you allowed
 remove this yourself using the AWS console (or you can leave it and re-use
 it next time).
 
-## Nexflow tips
+## Nextflow tips
 By default Nextflow is configured to use `/efs/work` as its work directory
 (where intermediate results are located). You will need to delete the contents
 of this directory once your workflows are complete to avoid it continually
@@ -336,7 +396,7 @@ or creating a local config file named `nextflow.config` in your current director
 By default Nextflow is configured with queue size of 100. If your cluster can
 cope with more that 100 concurrent jobs (typically this means you have more
 than 100 CPU cores) you will want to increase this value. It is defined in the
-nextflow config file as described above.
+Nextflow config file as described above.
 
 ---
 
