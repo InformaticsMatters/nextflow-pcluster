@@ -305,6 +305,18 @@ post_install = https://<CLUSTER_BUCKET>.s3.amazonaws.com/<CLUSTER_OS>-post-insta
 ec2_iam_role = <CLUSTER_ROLE_NAME>
 ```
 
+If you want to use **Spot** instances instead of **OnDemand** (the default)
+then add the following to the `queue compute` section: -
+
+```ini
+compute_type = spot
+```
+
+...and then consider whether you need to add `spot_price` setting to the
+`cluster default` section, which sets the maximum Spot price for the
+ComputeFleet. If you do not specify a value, you are charged the Spot price,
+capped at the On-Demand price.
+
 ## Create the cluster
 With configuration edited you can create the cluster: - 
 
