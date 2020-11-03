@@ -360,9 +360,10 @@ Congratulations! You can now run Slurm-based Nextflow workflows!
     create the cluster, remembering to set the Master node's file permissions
     correctly (i.e. `chmod 0600 ~/.ssh/${KEYPAIR_NAME}`)
 
->   An alternative (fast) SSH connection mechanism, armed with the
+>   An alternative (non-config) SSH connection mechanism, armed with the
     Master's address and private key-pair, is
-    `ssh -i ~/.ssh/nf-pcluster centos@<MASTER_ADDR>`.
+    `ssh -i ~/.ssh/nextflow-pcluster <USER>@<MASTER_ADDR>` where `<USER>` is
+    is `ec2-user` for an Amazon Linux 2 master and `centos` for Centos.
 
 ## Deleting the cluster
 Once you're done, if you no longer need the cluster, delete it: -
