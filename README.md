@@ -4,8 +4,8 @@ Material for the formation and use of an AWS (slurm-based) compute cluster.
 You'll need: -
 
 -   Python
--   jq
--   An AWS user with general administrative access
+-   [jq]
+-   An AWS user with an [AdministratorAccess] managed policy
 
 ## Overview
 These materials create a compute cluster on AWS running the a [Slurm] workload
@@ -40,8 +40,8 @@ below you typically: -
 5.  Delete the cluster to avoid AWS charges 
 
 ## Getting started
-Start from a suitable (ideally Python 3.8 host or better)
-virtual environment: -
+Start from a suitable virtual environment
+(ideally Python 3.8 host or better): -
 
     $ python -m venv ~/.venv/nextflow-pcluster
  
@@ -51,10 +51,6 @@ virtual environment: -
     
     $ aws --version
     aws-cli/1.18.170 Python/3.7.6 Darwin/19.6.0 botocore/1.19.10
-
-### Install jq
-[jq] is a convenient JSON query utility, it's useful to install it as some
-commands illustrated here rely on it.
 
     $ jq --version
     jq-1.6
@@ -72,40 +68,41 @@ or would like to create once specifically for the cluster this can be
 easily done with the `aws` CLI and `jq` to conveniently extract the
 private key block: -
 
-    $ KEYPAIR_NAME=nf-pcluster
+    $ KEYPAIR_NAME=nextflow-pcluster
     $ aws ec2 create-key-pair --key-name ${KEYPAIR_NAME} \
         | jq -r .KeyMaterial > ~/.ssh/${KEYPAIR_NAME} && \
         chmod 0600 ~/.ssh/${KEYPAIR_NAME} 
 
-### IAM User and Policies
-Using the AWS console (or CLI) create a user you want to use with the cluster
-with an "Access type" of **Programmatic access**. You do not need to set any
-"Permissions" or "tags", just click-through these and click **Create user**.
+### IAM Role and Policies
+Using the AWS console (or CLI) create a **Role** for use with the cluster.
+This will typically be an **EC2** role. Later we'll be attaching policies to
+this role. For now you do not need to add any additional policies.
+Just continue to **Create role** and give it a name (like `nextflow-pcluster`).
 
-You will be presented with the user's **Access Key Id** and an opportunity
-to view the **Secret access key**. Make a record of these before Closing the
-"Add user" screen.
+...and set some convenient variables, that we'll use later.
+Namely the created user name and your AWS account ID: -
 
-Set some convenient variables, that we'll use later. Namely the created user
-name and your AWS ID (replace the user ID shown below with your AWS user ID): -
+    $ CLUSTER_ROLE_NAME=nextflow-pcluster
+    $ CLUSTER_ACCOUNT_ID=000000000000
 
-    $ CLUSTER_USER=nf-pcluster
-    $ CLUSTER_USER_ID=000000000000
+We now create **Policies** in AWS and then attach them to the cluster role.
 
-We now create **Policies** in AWS and then attach them to the cluster user.
-
->   The user's policies must include those defined in the `iam`
+>   The role's policies must include those defined in the `iam`
     directory, as defined in the AWS [ParallelCluster Policies] documentation.
 
 >   Copies of the policies exist in this repository along with a shell-script
     to rapidly adapt them for the user and cluster you're going to create.
 
-Given a region, user account ID and a name you want to use to refer to your
-cluster you can render the repository's copy of the reference policy files 
+Given a region, user account ID, cluster name and a role name
+you can render the repository's copy of the reference policy files 
 using the following command: -
 
     $ CLUSTER_NAME=nextflow
-    $ ./render-policies.sh ${AWS_DEFAULT_REGION} ${CLUSTER_USER_ID} ${CLUSTER_NAME}
+    $ ./render-policies.sh \
+        ${AWS_DEFAULT_REGION} \
+        ${CLUSTER_ACCOUNT_ID} \
+        ${CLUSTER_NAME} \
+        ${CLUSTER_ROLE_NAME}
 
 Now install each of the policies using the AWS CLI. The policy names
 you choose must be unique for your account: -
@@ -122,19 +119,19 @@ you choose must be unique for your account: -
         --policy-name NextflowClusterOperatorPolicy \
         --policy-document file://nf-operator-policy.json
 
-Now, again using the AWS CLI, attach the policies to your chosen AWS user: -
+Now, again using the AWS CLI, attach the policies to your chosen AWS role: -
 
-    $ aws iam attach-user-policy \
-        --policy-arn arn:aws:iam::${CLUSTER_USER_ID}:policy/NextflowClusterInstancePolicy \
-        --user-name ${CLUSTER_USER}
+    $ aws iam attach-role-policy \
+        --policy-arn arn:aws:iam::${CLUSTER_ACCOUNT_ID}:policy/NextflowClusterInstancePolicy \
+        --role-name ${CLUSTER_ROLE_NAME}
         
-    $ aws iam attach-user-policy \
-        --policy-arn arn:aws:iam::${CLUSTER_USER_ID}:policy/NextflowClusterUserPolicy \
-        --user-name ${CLUSTER_USER}
+    $ aws iam attach-role-policy \
+        --policy-arn arn:aws:iam::${CLUSTER_ACCOUNT_ID}:policy/NextflowClusterUserPolicy \
+        --role-name ${CLUSTER_ROLE_NAME}
         
-    $ aws iam attach-user-policy \
-        --policy-arn arn:aws:iam::${CLUSTER_USER_ID}:policy/NextflowClusterOperatorPolicy \
-        --user-name ${CLUSTER_USER}
+    $ aws iam attach-role-policy \
+        --policy-arn arn:aws:iam::${CLUSTER_ACCOUNT_ID}:policy/NextflowClusterOperatorPolicy \
+        --role-name ${CLUSTER_ROLE_NAME}
         
 >   **Note**: Those policies defined by AWS do not include rules
     to permit VPC creation the use of spot instances but we are working on
@@ -163,7 +160,7 @@ chosen image to it (the bucket's called `nf-pcluster` in this example).
 Here we ensure that the file's `acl` (Access Control List)
 permits `public-read`: -
 
-    $ CLUSTER_BUCKET=nf-pcluster
+    $ CLUSTER_BUCKET=nextflow-pcluster
     $ CLUSTER_OS=amazon
     $ aws s3 cp installation-scripts/${CLUSTER_OS}-post-install.sh \
         s3://${CLUSTER_BUCKET}/${CLUSTER_OS}-post-install.sh \
@@ -198,7 +195,7 @@ Then run the configuration wizard: -
     [...]
     AWS Region ID [eu-central-1]:
     [...] 
-    EC2 Key Pair Name [nf-pcluster]:
+    EC2 Key Pair Name [nextflow-pcluster]:
     [...]
     Scheduler [slurm]:
     [...]
@@ -219,11 +216,13 @@ Then run the configuration wizard: -
 
 >   If you're creating a VPC the configuration may take a few minutes.
     
-Once complete, edit the resultant configuration file (in `~/.parallelcluster/config`).
+Once complete, edit the resultant configuration file.
 
-We need to provide details of the post-installation script and, in our case,
-an EFS volume for shared storage between the cluster instances and a timer
-to shutdown idle instances.
+You can refer to the aws [documentation for the configuration file]. 
+
+We need to provide details of the post-installation script, role and,
+in our case, an EFS volume for shared storage between the cluster instances
+and a timer to shutdown idle instances.
 
 Add the following new sections to the end of the `config` file: -
 
@@ -238,12 +237,14 @@ scaledown_idletime = 10
 ```
     
 And add the following to the existing `[cluster default]` section,
-replacing `<CLUSTER_BUCKET>` and `<CLUSTER_OS>` with the values you used: -
+replacing `<CLUSTER_BUCKET>`, `<CLUSTER_OS>` and `<CLUSTER_ROLE_NAME>`
+with the values you used: -
 
 ```ini
 scaling_settings = default
 efs_settings = default
 post_install = https://<CLUSTER_BUCKET>.s3.amazonaws.com/<CLUSTER_OS>-post-install.sh
+ec2_iam_role = <CLUSTER_ROLE_NAME>
 ```
 
 ## Create the cluster
@@ -269,6 +270,7 @@ workflow, which will create compute instances to run the workflow processes: -
     [...]
     
     centos@ip-0-0-0-0 ~]$ nextflow run hello
+    [...]
     N E X T F L O W  ~  version 20.07.1
     [...]
     [4e/8c5c13] process > sayHello (3) [100%] 4 of 4 ✔
@@ -289,19 +291,19 @@ workflow, which will create compute instances to run the workflow processes: -
     compute instances need to be instantiated (compute instances are created
     on-demand and, in our configuration, retired automatically when idle
     for 10 minutes) as well as the download of Nextflow dependent modules
-    and conversion of the required Docker container image to Singularity. 
+    and conversion of any required Docker container images to Singularity. 
 
 Congratulations! You can now run Slurm-based Nextflow workflows!
 
 >   To execute our [fragmentation workflow] you may need the private copy of
-    the keypair used to create the cluster in the head-node's
+    the keypair used to create the cluster in the Master node's
     `~/.ssh/${KEYPAIR_NAME}` directory. This will allow you to create the
     database server (a separate EC2 instance) using the keypair you used to
-    create the cluster, remembering to set the head node's file permissions
+    create the cluster, remembering to set the Master node's file permissions
     correctly (i.e. `chmod 0600 ~/.ssh/${KEYPAIR_NAME}`)
 
 >   An alternative (fast) SSH connection mechanism, armed with the
-    Master's address and private key-pari, is
+    Master's address and private key-pair, is
     `ssh -i ~/.ssh/nf-pcluster centos@<MASTER_ADDR>`.
 
 ## Deleting the cluster
@@ -324,19 +326,23 @@ remove this yourself using the AWS console (or you can leave it and re-use
 it next time).
 
 ## Nexflow tips
+By default Nextflow is configured to use `/efs/work` as its work directory
+(where intermediate results are located). You will need to delete the contents
+of this directory once your workflows are complete to avoid it continually
+increasing in size (and incur ever increasing charges!). The location of the
+"work dir" can be changed by editing the `/home/centos/.nextflow/config` file
+or creating a local config file named `nextflow.config` in your current directory.
 
-By default Nextflow is configured to use `/efs/work` as its work directory (where intermediate results are located).
-You will need to delete the contents of this directory once your workflows are complete to avoid it continually
-increasing in size (and incur ever increasing charges!). the location of the work dir can be changed by editing the 
-`/home/centos/.nextflow/config` file or creating a local config file named `nextflow.config` in your current directory.
-
-By default Nextflow is configured with queue size of 100. If your cluster can cope with more that 100 concurrent jobs
-(typically this means you have more than 100 CPU cores) you will want to increase this value. It is defined in the
+By default Nextflow is configured with queue size of 100. If your cluster can
+cope with more that 100 concurrent jobs (typically this means you have more
+than 100 CPU cores) you will want to increase this value. It is defined in the
 nextflow config file as described above.
 
 ---
 
+[administratoraccess]: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html#aws-managed-policies
 [aws parallel cluster]: https://docs.aws.amazon.com/parallelcluster/index.html
+[documentation for the configuration file]: https://docs.aws.amazon.com/parallelcluster/latest/ug/configuration.html
 [fragmentation workflow]: https://github.com/InformaticsMatters/fragmentor
 [jq]: https://stedolan.github.io/jq/
 [nextflow]: https://www.nextflow.io/
