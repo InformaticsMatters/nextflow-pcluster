@@ -137,7 +137,8 @@ Now, again using the AWS CLI, attach the policies to your chosen AWS user: -
         --user-name ${CLUSTER_USER}
         
 >   **Note**: Those policies defined by AWS do not include rules
-    to permit the use of spot instances but we are working on a solution.
+    to permit VPC creation the use of spot instances but we are working on
+    a solution.
 
 ### Upload installation scripts
 Part of cluster formation permits the execution of installation scripts
