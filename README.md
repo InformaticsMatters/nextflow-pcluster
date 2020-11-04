@@ -58,8 +58,8 @@ Start from a suitable virtual environment
 ### EC2 key-pair
 If you have an existing SSH keypair on the AWS account you can skip this step.
 
-If you do not have a pre-existing keypair, as an AWS user with general
-administrative access, set the user credentials and default region environment
+If you do not have a pre-existing keypair, as an AWS user with
+*AdministratorAccess*, set the user credentials and default region environment
 variables for your intended cluster: -
 
     $ export AWS_ACCESS_KEY_ID=????
@@ -87,7 +87,7 @@ Namely the created user name and your AWS account ID: -
     $ CLUSTER_ROLE_NAME=nextflow-pcluster
     $ CLUSTER_ACCOUNT_ID=000000000000
 
-We now create **Policies** in AWS and then attach them to the cluster role.
+We now create **Policies** in AWS and then attach them to the role.
 
 >   The role's policies must include those defined in the `iam`
     directory, as defined in the AWS [ParallelCluster Policies] documentation.
@@ -121,10 +121,6 @@ you choose must be unique for your account: -
         --policy-name NextflowClusterOperatorPolicy \
         --policy-document file://nf-operator-policy.json
 
-    $ aws iam create-policy \
-        --policy-name NextflowClusterUserPatchPolicy \
-        --policy-document file://iam/user-patch-policy.json
-
 Now, again using the AWS CLI, attach the policies to your chosen AWS role: -
 
     $ aws iam attach-role-policy \
@@ -138,13 +134,6 @@ Now, again using the AWS CLI, attach the policies to your chosen AWS role: -
     $ aws iam attach-role-policy \
         --policy-arn arn:aws:iam::${CLUSTER_ACCOUNT_ID}:policy/NextflowClusterOperatorPolicy \
         --role-name ${CLUSTER_ROLE_NAME}
-
->   The NextflowClusterUserPatchPolicy is used for an optional IAM user
-    described later and is not attached to the Role.
-        
->   **Note**: Those policies defined by AWS do not include rules
-    to permit the use of spot instances but we are working on
-    a solution.
 
 ### Upload installation scripts
 Part of cluster formation permits the execution of installation scripts
@@ -176,7 +165,7 @@ permits `public-read`: -
         --acl public-read
 
 ## Creating a cluster configuration user
-From this point on we will be running the `pcluster` command-line utility
+From here we will be running the `pcluster` command-line utility
 to configure and manage the actual cluster. All we've done so far is
 prepare the ground for the formation of the cluster.
 
@@ -186,20 +175,20 @@ section - **Creating a cluster configuration**.
 
 >   You will still need a user with *AdministratorAccess* in this step.
 
-But, if you do not have access to a User with *AdministratorAccess* then you
-need to create one now and attach suitable policies.
+But, if you do not want to use a user with *AdministratorAccess* to
+create the cluster then you need to create a new user and attach suitable
+policies.
 
-Firstly, in the AWS console, create a new user with **Programmatic access**
-in your AWS account. Something like `nextflow-pcluster`
-(or select an existing user)
+Firstly, in the AWS console, create a new user with **Programmatic access**.
+Something like `nextflow-pcluster` (or select an existing user)
  
 >   There is no need to add any policies to the user but you must record
     the newly assigned **Access key ID** and **Secret access key** before
     closing the final window. If you forget you can always create another
     access key later.
 
-Now, attach suitable policies to the user, present and pre-rendered here
-in earlier steps: -
+Now, attach the previously rendered **NextflowClusterUserPolicy** policy
+to our user: -
 
     $ CLUSTER_USER_NAME=nextflow-pcluster
 
@@ -207,11 +196,8 @@ in earlier steps: -
         --policy-arn arn:aws:iam::${CLUSTER_ACCOUNT_ID}:policy/NextflowClusterUserPolicy \
         --user-name ${CLUSTER_USER_NAME}
 
-    $ aws iam attach-user-policy \
-        --policy-arn arn:aws:iam::${CLUSTER_ACCOUNT_ID}:policy/NextflowClusterUserPatchPolicy \
-        --user-name ${CLUSTER_USER_NAME}
-
-The user credentials can now be used in the next step to configure the cluster.
+The user's credentials rather than an admin user's credentials
+can now be used in the next step to configure the cluster.
 
 ## Creating a cluster configuration
 With the preparation work done we're all set to configure and create a cluster.
