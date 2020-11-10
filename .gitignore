@@ -1,3 +1,5 @@
 .idea/
 config
 nf-*-policy.json
+.nextflow/
+.nextflow.*
