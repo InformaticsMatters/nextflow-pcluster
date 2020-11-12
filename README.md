@@ -384,19 +384,6 @@ Tearing down the cluster does not delete the cluster's VPC. If you allowed
 remove this yourself using the AWS console (or you can leave it and re-use
 it next time).
 
-## Nextflow tips
-By default Nextflow is configured to use `/efs/work` as its work directory
-(where intermediate results are located). You will need to delete the contents
-of this directory once your workflows are complete to avoid it continually
-increasing in size (and incur ever increasing charges!). The location of the
-"work dir" can be changed by editing the `/home/centos/.nextflow/config` file
-or creating a local config file named `nextflow.config` in your current directory.
-
-By default Nextflow is configured with queue size of 100. If your cluster can
-cope with more that 100 concurrent jobs (typically this means you have more
-than 100 CPU cores) you will want to increase this value. It is defined in the
-Nextflow config file as described above.
-
 ---
 
 [administratoraccess]: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html#aws-managed-policies
