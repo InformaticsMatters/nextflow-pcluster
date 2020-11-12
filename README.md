@@ -50,7 +50,7 @@ Start from a suitable virtual environment
     (nextflow-pcluster) $ pip install -r requirements.txt --upgrade
     
     $ aws --version
-    aws-cli/1.18.170 Python/3.7.6 Darwin/19.6.0 botocore/1.19.10
+    aws-cli/1.18.176 Python/3.7.6 Darwin/19.6.0 botocore/1.19.16
 
     $ jq --version
     jq-1.6
