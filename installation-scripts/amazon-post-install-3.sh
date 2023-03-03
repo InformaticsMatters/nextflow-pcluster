@@ -57,32 +57,10 @@ esac
 # Common node actions
 # (HeadNode and ComputeFleet)
 
-# Install appraiser 1.0.0 (the new singularity)
-
-# # Basic development tools
-# yum groupinstall -y 'Development Tools'
-# # Ensure EPEL repository is available
-# yum install -y epel-release
-# # Install RPM packages for dependencies
-# yum install -y \
-#    libseccomp-devel \
-#    squashfs-tools \
-#    cryptsetup \
-#    wget git
-# 
-# # Install Go
-# export VERSION=1.17.6 OS=linux ARCH=amd64 && \
-#     wget https://dl.google.com/go/go$VERSION.$OS-$ARCH.tar.gz && \
-#     tar -C /usr/local -xzvf go$VERSION.$OS-$ARCH.tar.gz && \
-#     rm go$VERSION.$OS-$ARCH.tar.gz
-# export PATH=/usr/local/go/bin:$PATH
-# 
-# # Get apptainer
-# export VERSION=1.0.0 && # adjust this as necessary \
-#     wget https://github.com/apptainer/apptainer/releases/download/v${VERSION}/apptainer-${VERSION}.tar.gz && \
-#     tar -xzf apptainer-${VERSION}.tar.gz && \
-#     cd apptainer-${VERSION}
-# # Build apptainer/singularity…
-# ./mconfig && \
-#     make -C builddir && \
-#     make -C builddir install
+# Install appraiser (the new singularity)
+yum -y update
+amazon-linux-extras install epel
+curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_7/devel:kubic:libcontainers:stable.repo
+yum -y install yum-plugin-copr
+yum -y copr enable lsm5/container-selinux
+yum -y install apptainer

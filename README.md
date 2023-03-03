@@ -306,15 +306,32 @@ capped at the On-Demand price.
 ## Create the cluster
 With configuration edited you can create the cluster: - 
 
-    $ pcluster create -c ./config ${CLUSTER_NAME}
-    Beginning cluster creation for cluster: nextflow
-    [...]
-    Creating stack named: parallelcluster-nextflow
-    Status: parallelcluster-nextflow - CREATE_COMPLETE                              
-    ClusterUser: ec2-user
-    MasterPrivateIP: 10.0.0.179
+    $ pcluster create-cluster \
+        --cluster-config ./config \
+        --cluster-name ${CLUSTER_NAME} \
+        --region ${CLUSTER_REGION}
+
+And list clusters with: -
+
+    $ pcluster list-clusters
 
 >   Allow 10 to 15 minutes for cluster formation to finish
+
+## Mounting a pre-configured EFS on the bastion
+Assuming you've created a suitable EFS you can mount it on the bastion
+with the following commands, replacing `???` with values relevant to you: -
+
+    $ sudo yum install -y amazon-efs-utils
+    $ sudo yum -y install nfs-utils
+    $ sudo service nfs start
+
+    $ sudo mkdir /efs
+    $ sudo mount -t nfs \
+        -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport \
+        fs-????????????.efs.????.amazonaws.com:/ \
+        /efs
+
+>   Refer to the [EFS] documentation for further details.
 
 ## Connect to the cluster
 Your cluster's created (well the _head node_ is). You can now use the CLI to
@@ -322,7 +339,7 @@ connect to the head node using the SSH key you created earlier. Here we just
 make sure Nextflow is correctly installed by running the classic _hello_
 workflow, which will create compute instances to run the workflow processes: -
 
-    $ pcluster ssh ${CLUSTER_NAME} -i ~/.ssh/${KEYPAIR_NAME}
+    $ pcluster ssh -n ${CLUSTER_NAME} -i ~/.ssh/${KEYPAIR_NAME}
     [...]
     
     centos@ip-0-0-0-0 ~]$ nextflow run hello
@@ -366,10 +383,9 @@ Congratulations! You can now run Slurm-based Nextflow workflows!
 ## Deleting the cluster
 Once you're done, if you no longer need the cluster, delete it: -
 
-    $ pcluster delete -c ./config ${CLUSTER_NAME}
-    Deleting: nextflow
-    [...]    
-    Cluster deleted successfully.
+    $ pcluster delete-cluster \
+        --cluster-name ${CLUSTER_NAME} \
+        --region ${CLUSTER_REGION}
 
 >   Be careful with this command - it does not ask "Are you sure?".
 
@@ -389,6 +405,7 @@ it next time).
 [administratoraccess]: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html#aws-managed-policies
 [aws parallel cluster]: https://docs.aws.amazon.com/parallelcluster/index.html
 [documentation for the configuration file]: https://docs.aws.amazon.com/parallelcluster/latest/ug/configuration.html
+[efs]: https://docs.aws.amazon.com/efs/latest/ug/mounting-fs.html
 [fragmentation workflow]: https://github.com/InformaticsMatters/fragmentor
 [jq]: https://stedolan.github.io/jq/
 [nextflow]: https://www.nextflow.io/
