@@ -1,0 +1,100 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "s3:GetObject",
+                "s3:GetObjectVersion"
+            ],
+            "Resource": [
+                "arn:aws:s3:::<REGION>-aws-parallelcluster/*",
+                "arn:aws:s3:::dcv-license.<REGION>/*",
+                "arn:aws:s3:::parallelcluster-*-v1-do-not-delete/*"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:BatchWriteItem"
+            ],
+            "Resource": "arn:aws:dynamodb:<REGION>:<AWS ACCOUNT ID>:table/parallelcluster-*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "StringEquals": {
+                    "ec2:ResourceTag/parallelcluster:node-type": "Compute"
+                }
+            },
+            "Action": "ec2:TerminateInstances",
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "ec2:RunInstances",
+                "ec2:CreateFleet"
+            ]
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "StringEquals": {
+                    "iam:PassedToService": [
+                        "ec2.amazonaws.com"
+                    ]
+                }
+            },
+            "Action": [
+                "iam:PassRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::<AWS ACCOUNT ID>:role/parallelcluster/*",
+                "arn:aws:iam::<AWS ACCOUNT ID>:instance-profile/parallelcluster/*"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "ec2:DescribeInstances",
+                "ec2:DescribeInstanceStatus",
+                "ec2:DescribeVolumes",
+                "ec2:DescribeInstanceAttribute",
+                "ec2:DescribeCapacityReservations"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "ec2:CreateTags",
+                "ec2:AttachVolume"
+            ],
+            "Resource": [
+                "arn:aws:ec2:<REGION>:<AWS ACCOUNT ID>:instance/*",
+                "arn:aws:ec2:<REGION>:<AWS ACCOUNT ID>:volume/*"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "cloudformation:DescribeStacks",
+                "cloudformation:DescribeStackResource",
+                "cloudformation:SignalResource"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "route53:ChangeResourceRecordSets"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        }
+    ]
+}

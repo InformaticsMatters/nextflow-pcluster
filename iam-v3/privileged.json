@@ -1,0 +1,64 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "iam:CreateServiceLinkedRole",
+                "iam:DeleteRole",
+                "iam:TagRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::<AWS ACCOUNT ID>:role/parallelcluster/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "IamRole"
+        },
+        {
+            "Action": [
+                "iam:CreateRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::<AWS ACCOUNT ID>:role/parallelcluster/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "IamCreateRole"
+        },
+        {
+            "Action": [
+                "iam:PutRolePolicy",
+                "iam:DeleteRolePolicy"
+            ],
+            "Resource": "arn:aws:iam::<AWS ACCOUNT ID>:role/parallelcluster/*",
+            "Effect": "Allow",
+            "Sid": "IamInlinePolicy"
+        },
+        {
+            "Condition": {
+                "ArnLike": {
+                    "iam:PolicyARN": [
+                        "arn:aws:iam::<AWS ACCOUNT ID>:policy/parallelcluster*",
+                        "arn:aws:iam::<AWS ACCOUNT ID>:policy/parallelcluster/*",
+                        "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+                        "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+                        "arn:aws:iam::aws:policy/AWSBatchFullAccess",
+                        "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess",
+                        "arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole",
+                        "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role",
+                        "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+                        "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole",
+                        "arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilder",
+                        "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+                    ]
+                }
+            },
+            "Action": [
+                "iam:AttachRolePolicy",
+                "iam:DetachRolePolicy"
+            ],
+            "Resource": "arn:aws:iam::<AWS ACCOUNT ID>:role/parallelcluster/*",
+            "Effect": "Allow",
+            "Sid": "IamPolicy"
+        }
+    ]
+ }
+ 
