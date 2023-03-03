@@ -203,105 +203,58 @@ can now be used in the next step to configure the cluster.
 With the preparation work done we're all set to configure and create a cluster.
 
 We use the `pcluster configure` command's interactive wizard to define our
-cluster. This command creates a configuration file that is used by a
-separate `create` step.
+cluster.
 
->   An example execution of the configuration step is illustrated below,
-    of course you'll answer the questions in a way that satisfies
-    your environment.
+Here's a typical configuration file (with redacted data): -
 
->   To date we have only tested using a Centos7 and Amazon Linux 2 as the OS,
-    Slurm as the workload manager and a single work queue
-
-The wizard will prompt you with a number of questions. A typical set
-of responses for a minimal cluster with auto-generated VPC is reproduced for
-convenience below. Here, the configuration is saved to the local file
-`config`.
-
-Firstly, set the AWS credentials for your chosen user. These will be the
-credentials for either a user with *AdministratorAccess* privileges or the
-user you created in the previous section. Set the appropriate credentials: -
-
-    $ export AWS_ACCESS_KEY_ID=????
-    $ export AWS_SECRET_ACCESS_KEY=??????
-    $ export AWS_DEFAULT_REGION=eu-central-1
-
->   From this point you're running the `pcluster` commands as either a new user
-    with limited policies or as a user with *AdministratorAccess*.
- 
-Remove any existing configuration file if it exists...
-
-    $ rm config
-    
-Then run the configuration wizard: -
-
-    $ pcluster configure -c ./config
-    [...]
-    AWS Region ID [eu-central-1]:
-    [...] 
-    EC2 Key Pair Name [nextflow-pcluster]:
-    [...]
-    Scheduler [slurm]:
-    [...]
-    Operating System [alinux2]:
-    [...]
-    Minimum cluster size (instances) [0]:
-    Maximum cluster size (instances) [10]: 2
-    Master instance type [t2.micro]: t3a.medium
-    Compute instance type [t2.micro]: m4.large
-    Automate VPC creation? (y/n) [n]: y
-    [...]
-    Network Configuration [Master in a public subnet and compute fleet in a private subnet]: 
-    [...]
-    Beginning VPC creation. Please do not leave the terminal until the creation is finalized
-    [...]
-    The stack has been created
-    Configuration file written to [...]/config
-
->   If you're creating a VPC the configuration may take a few minutes.
-    
-Once complete, edit the resultant configuration file.
-
-You can refer to the aws [documentation for the configuration file]. 
-
-We need to provide details of the post-installation script, role and,
-in our case, an EFS volume for shared storage between the cluster instances
-and a timer to shutdown idle instances.
-
-Add the following new sections to the end of the `config` file: -
-
-```ini
-[efs default]
-shared_dir = efs
-encrypted = false
-performance_mode = generalPurpose
-
-[scaling default]
-scaledown_idletime = 10
-```
-    
-And add the following to the existing `[cluster default]` section,
-replacing `<CLUSTER_BUCKET>`, `<CLUSTER_OS>` and `<CLUSTER_ROLE_NAME>`
-with the values you used: -
-
-```ini
-scaling_settings = default
-efs_settings = default
-post_install = https://<CLUSTER_BUCKET>.s3.amazonaws.com/<CLUSTER_OS>-post-install.sh
-ec2_iam_role = <CLUSTER_ROLE_NAME>
+```yaml
+Region: us-west-2
+Image:
+  Os: alinux2
+Tags:
+  - Key: Dept
+    Value: 'XYZ'
+SharedStorage:
+- Name: cluster-one
+  StorageType: Efs
+  MountDir: efs
+  EfsSettings:
+    FileSystemId: fs-00000000000000.efs.us-west-2.amazonaws.com
+HeadNode:
+  InstanceType: t3a.large
+  Networking:
+    SubnetId: subnet-00000000000000000
+    ElasticIp: false
+  Ssh:
+    KeyName: im-pc3
+  CustomActions:
+    OnNodeConfigured:
+      Script: https://im-aws-parallel-cluster.s3.amazonaws.com/amazon-post-install.sh
+  Iam:
+    InstanceRole: arn:aws:iam::000000000000:role/nextflow-pcluster
+Scheduling:
+  Scheduler: slurm
+  SlurmSettings:
+    ScaledownIdletime: 15
+  SlurmQueues:
+    - Name: compute
+      CapacityType: SPOT
+      ComputeResources:
+        - Name: cluster-one
+          InstanceType: c5a.4xlarge
+          MaxCount: 25
+          Efa:
+            Enabled: false
+      CustomActions:
+        OnNodeConfigured:
+          Script: https://im-aws-parallel-cluster.s3.amazonaws.com/amazon-post-install.sh
+      Iam:
+        InstanceRole: arn:aws:iam::000000000000:role/nextflow-pcluster
+      Networking:
+        SubnetIds:
+        - subnet-00000000000000000
 ```
 
-If you want to use **Spot** instances instead of **OnDemand** (the default)
-then add the following to the `queue compute` section: -
-
-```ini
-compute_type = spot
-```
-
-...and then consider whether you need to add `spot_price` setting to the
-`cluster default` section, which sets the maximum Spot price for the
-ComputeFleet. If you do not specify a value, you are charged the Spot price,
-capped at the On-Demand price.
 
 ## Create the cluster
 With configuration edited you can create the cluster: - 
