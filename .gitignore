@@ -1,5 +1,7 @@
 .idea/
-config
+venv/
+cfg*
+config*
 nf-*-policy.json
 .nextflow/
 .nextflow.*

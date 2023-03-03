@@ -1,4 +1,4 @@
-botocore == 1.20.83
-awscli == 1.19.83
-aws-parallelcluster == 2.10.4
+botocore == 1.29.72
+awscli == 1.27.72
+aws-parallelcluster == 3.4.1
 jmespath == 0.10.0
