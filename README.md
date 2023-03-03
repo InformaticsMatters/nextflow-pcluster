@@ -261,8 +261,7 @@ With configuration edited you can create the cluster: -
 
     $ pcluster create-cluster \
         --cluster-config ./config \
-        --cluster-name ${CLUSTER_NAME} \
-        --region ${CLUSTER_REGION}
+        --cluster-name ${CLUSTER_NAME}
 
 And list clusters with: -
 
