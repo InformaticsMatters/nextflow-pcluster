@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# ParallelCluster post-installation script for Amazon Linux 2
+# ParallelCluster v3 post-installation script for Amazon Linux 2
 
 echo "post-install script has $# arguments"
 for arg in "$@"
@@ -11,7 +11,7 @@ done
 . "/etc/parallelcluster/cfnconfig"
 
 case "${cfn_node_type}" in
-    MasterServer)
+    HeadNode)
         # epel-release to allow for things like the installation of pip
         yum install -y epel-release
 
@@ -55,7 +55,12 @@ EOF
 esac
 
 # Common node actions
-# (MasterServer and ComputeFleet)
+# (HeadNode and ComputeFleet)
 
-# Install Singularity
-yum -y install singularity
+# Install appraiser (the new singularity)
+yum -y update
+amazon-linux-extras install epel
+curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_7/devel:kubic:libcontainers:stable.repo
+yum -y install yum-plugin-copr
+yum -y copr enable lsm5/container-selinux
+yum -y install apptainer

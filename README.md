@@ -1,5 +1,6 @@
 # Nextflow AWS ParallelCluster Configuration
-Material for the formation and use of an AWS (slurm-based) compute cluster.
+Material for the formation and use of an v3 ParallelCluster (slurm-based) compute
+environment.
 
 You'll need: -
 
@@ -16,7 +17,6 @@ automates the creation of a number of types of cluster on AWS.
 
 Standard usage of these materials results in creating:
 
--   A VPC with public and private subnets (a pre-existing VPC can be used instead)
 -   A single master node in the public subnet
 -   An autoscaling group of worker nodes in the private subnet
 -   A shared EFS volume mounted at `/efs` on all master and worker nodes
@@ -43,17 +43,17 @@ below you typically: -
 Start from a suitable virtual environment
 (ideally Python 3.8 host or better): -
 
-    $ python -m venv ~/.venv/nextflow-pcluster
+    $ python -m venv venv
  
-    $ source ~/.venv/nextflow-pcluster/bin/activate
-    (nextflow-pcluster) $ pip install --upgrade pip
-    (nextflow-pcluster) $ pip install -r requirements.txt --upgrade
+    $ source venv/bin/activate
+    (venv) $ pip install --upgrade pip
+    (venv) $ pip install -r requirements.txt --upgrade
     
     $ aws --version
-    aws-cli/1.18.176 Python/3.7.6 Darwin/19.6.0 botocore/1.19.16
+    aws-cli/2.9.1 Python/3.11.0 Darwin/21.6.0 source/x86_64 prompt/off
 
     $ jq --version
-    jq-1.6
+    jq-1.5
 
 ### EC2 key-pair
 If you have an existing SSH keypair on the AWS account you can skip this step.
@@ -89,13 +89,14 @@ Namely the created user name and your AWS account ID: -
 
 We now create **Policies** in AWS and then attach them to the role.
 
->   The role's policies must include those defined in the `iam`
-    directory, as defined in the AWS [ParallelCluster Policies] documentation.
+>   The [ParallelCluster policies] for v3 are numerous and complex
+    but we've extracted what we found to be essential and placed them
+    in the project `iam` directory.
 
 >   Copies of the policies exist in this repository along with a shell-script
     to rapidly adapt them for the user and cluster you're going to create.
 
-Given a region, user account ID, cluster name and a role name
+Given a region (like `us-west-2`), user account ID, cluster name and a role name
 you can render the repository's copy of the reference policy files 
 using the following command: -
 
@@ -205,7 +206,10 @@ With the preparation work done we're all set to configure and create a cluster.
 We use the `pcluster configure` command's interactive wizard to define our
 cluster.
 
-Here's a typical configuration file (with redacted data): -
+Here's a typical configuration file we end up with (with redacted data).
+Rather than use `pcluster configure` you can simply craft your own file.
+In the following we are using a pre-assigned EFS, one created using the AWS
+console: -
 
 ```yaml
 Region: us-west-2
@@ -254,7 +258,6 @@ Scheduling:
         SubnetIds:
         - subnet-00000000000000000
 ```
-
 
 ## Create the cluster
 With configuration edited you can create the cluster: - 
@@ -347,20 +350,15 @@ Once you're done, if you no longer need the cluster, delete it: -
     console to make sure the stack responsible for the cluster has been
     deleted.
 
-Tearing down the cluster does not delete the cluster's VPC. If you allowed
-`pcluster` to create the VPC automatically you will need to
-remove this yourself using the AWS console (or you can leave it and re-use
-it next time).
-
 ---
 
 [administratoraccess]: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html#aws-managed-policies
 [aws parallel cluster]: https://docs.aws.amazon.com/parallelcluster/index.html
-[documentation for the configuration file]: https://docs.aws.amazon.com/parallelcluster/latest/ug/configuration.html
+[documentation for the configuration file]: https://docs.aws.amazon.com/parallelcluster/latest/ug/cluster-configuration-file-v3.html
 [efs]: https://docs.aws.amazon.com/efs/latest/ug/mounting-fs.html
 [fragmentation workflow]: https://github.com/InformaticsMatters/fragmentor
 [jq]: https://stedolan.github.io/jq/
 [nextflow]: https://www.nextflow.io/
-[parallelcluster policies]: https://docs.aws.amazon.com/parallelcluster/latest/ug/iam.html#parallelclusteruserpolicy-minimal-user
+[parallelcluster policies]: https://docs.aws.amazon.com/parallelcluster/latest/ug/iam-roles-in-parallelcluster-v3.html
 [singularity]: https://sylabs.io/docs/
 [slurm]: https://slurm.schedmd.com
