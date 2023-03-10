@@ -258,10 +258,8 @@ Scheduling:
 ## Create the cluster
 With configuration edited you can create the cluster: - 
 
-    $ CLUSTER_NAME=cluser-one
-    $ pcluster create-cluster \
-        --cluster-config ./config.yaml \
-        --cluster-name ${CLUSTER_NAME}
+    $ CLUSTER_NAME=cluster-one
+    $ pcluster create-cluster -c ./config.yaml -n ${CLUSTER_NAME}
 
 And list clusters with: -
 
@@ -338,8 +336,7 @@ Congratulations! You can now run Slurm-based Nextflow workflows!
 ## Deleting the cluster
 Once you're done, if you no longer need the cluster, delete it: -
 
-    $ pcluster delete-cluster \
-        --cluster-name ${CLUSTER_NAME}
+    $ pcluster delete-cluster -c ${CLUSTER_NAME}
 
 >   Be careful with this command - it does not ask "Are you sure?".
 
