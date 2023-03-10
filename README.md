@@ -223,7 +223,7 @@ SharedStorage:
   StorageType: Efs
   MountDir: efs
   EfsSettings:
-    FileSystemId: fs-00000000000000.efs.us-west-2.amazonaws.com
+    FileSystemId: fs-00000000000000
 HeadNode:
   InstanceType: t3a.large
   Networking:
@@ -234,8 +234,6 @@ HeadNode:
   CustomActions:
     OnNodeConfigured:
       Script: https://im-aws-parallel-cluster.s3.amazonaws.com/amazon-post-install.sh
-  Iam:
-    InstanceRole: arn:aws:iam::000000000000:role/nextflow-pcluster
 Scheduling:
   Scheduler: slurm
   SlurmSettings:
@@ -252,8 +250,6 @@ Scheduling:
       CustomActions:
         OnNodeConfigured:
           Script: https://im-aws-parallel-cluster.s3.amazonaws.com/amazon-post-install.sh
-      Iam:
-        InstanceRole: arn:aws:iam::000000000000:role/nextflow-pcluster
       Networking:
         SubnetIds:
         - subnet-00000000000000000
@@ -262,8 +258,9 @@ Scheduling:
 ## Create the cluster
 With configuration edited you can create the cluster: - 
 
+    $ CLUSTER_NAME=cluser-one
     $ pcluster create-cluster \
-        --cluster-config ./config \
+        --cluster-config ./config.yaml \
         --cluster-name ${CLUSTER_NAME}
 
 And list clusters with: -
@@ -292,9 +289,12 @@ with the following commands, replacing `???` with values relevant to you: -
 Your cluster's created (well the _head node_ is). You can now use the CLI to
 connect to the head node using the SSH key you created earlier. Here we just
 make sure Nextflow is correctly installed by running the classic _hello_
-workflow, which will create compute instances to run the workflow processes: -
+workflow, which will create compute instances to run the workflow processes.
 
-    $ pcluster ssh -n ${CLUSTER_NAME} -i ~/.ssh/${KEYPAIR_NAME}
+Assuming you've put your private key file in `~/.ssh/id_rsa` you can connect
+with: -
+
+    $ pcluster ssh -n ${CLUSTER_NAME}
     [...]
     
     centos@ip-0-0-0-0 ~]$ nextflow run hello
@@ -339,8 +339,7 @@ Congratulations! You can now run Slurm-based Nextflow workflows!
 Once you're done, if you no longer need the cluster, delete it: -
 
     $ pcluster delete-cluster \
-        --cluster-name ${CLUSTER_NAME} \
-        --region ${CLUSTER_REGION}
+        --cluster-name ${CLUSTER_NAME}
 
 >   Be careful with this command - it does not ask "Are you sure?".
 
