@@ -243,7 +243,8 @@ Scheduling:
       CapacityType: SPOT
       ComputeResources:
         - Name: cluster-one
-          InstanceType: c5a.4xlarge
+          InstanceType: c6a.4xlarge
+          MinCount: 1
           MaxCount: 25
           Efa:
             Enabled: false
@@ -336,7 +337,7 @@ Congratulations! You can now run Slurm-based Nextflow workflows!
 ## Deleting the cluster
 Once you're done, if you no longer need the cluster, delete it: -
 
-    $ pcluster delete-cluster -c ${CLUSTER_NAME}
+    $ pcluster delete-cluster -n ${CLUSTER_NAME}
 
 >   Be careful with this command - it does not ask "Are you sure?".
 
