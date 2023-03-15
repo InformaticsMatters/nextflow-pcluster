@@ -1,0 +1,180 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "ec2:DescribeImages",
+                "ec2:DescribeInstanceTypeOfferings",
+                "ec2:DescribeInstanceTypes",
+                "ec2:DeregisterImage",
+                "ec2:DeleteSnapshot"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "EC2"
+        },
+        {
+            "Action": [
+                "iam:CreateInstanceProfile",
+                "iam:AddRoleToInstanceProfile",
+                "iam:GetRole",
+                "iam:GetRolePolicy",
+                "iam:GetInstanceProfile",
+                "iam:RemoveRoleFromInstanceProfile"
+            ],
+            "Resource": [
+                "arn:aws:iam::<AWS ACCOUNT ID>:instance-profile/parallelcluster/*",
+                "arn:aws:iam::<AWS ACCOUNT ID>:instance-profile/ParallelClusterImage*",
+                "arn:aws:iam::<AWS ACCOUNT ID>:role/parallelcluster/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "IAM"
+        },
+        {
+            "Condition": {
+                "StringEquals": {
+                    "iam:PassedToService": [
+                        "lambda.amazonaws.com",
+                        "ec2.amazonaws.com"
+                    ]
+                }
+            },
+            "Action": [
+                "iam:PassRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::<AWS ACCOUNT ID>:instance-profile/parallelcluster/*",
+                "arn:aws:iam::<AWS ACCOUNT ID>:role/parallelcluster/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "IAMPassRole"
+        },
+        {
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:TagResource",
+                "logs:UntagResource",
+                "logs:DeleteLogGroup"
+            ],
+            "Resource": [
+                "arn:aws:logs:*:<AWS ACCOUNT ID>:log-group:/aws/imagebuilder/ParallelClusterImage-*",
+                "arn:aws:logs:*:<AWS ACCOUNT ID>:log-group:/aws/lambda/ParallelClusterImage-*"
+            ],
+            "Effect": "Allow",
+            "Sid": "CloudWatch"
+        },
+        {
+            "Action": [
+                "cloudformation:DescribeStacks",
+                "cloudformation:CreateStack",
+                "cloudformation:DeleteStack"
+            ],
+            "Resource": [
+                "arn:aws:cloudformation:*:<AWS ACCOUNT ID>:stack/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "CloudFormation"
+        },
+        {
+            "Action": [
+                "lambda:CreateFunction",
+                "lambda:GetFunction",
+                "lambda:AddPermission",
+                "lambda:RemovePermission",
+                "lambda:DeleteFunction",
+                "lambda:TagResource",
+                "lambda:ListTags",
+                "lambda:UntagResource"
+            ],
+            "Resource": [
+                "arn:aws:lambda:*:<AWS ACCOUNT ID>:function:ParallelClusterImage-*"
+            ],
+            "Effect": "Allow",
+            "Sid": "Lambda"
+        },
+        {
+            "Action": [
+                "imagebuilder:Get*"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "ImageBuilderGet"
+        },
+        {
+            "Action": [
+                "imagebuilder:CreateImage",
+                "imagebuilder:TagResource",
+                "imagebuilder:CreateImageRecipe",
+                "imagebuilder:CreateComponent",
+                "imagebuilder:CreateDistributionConfiguration",
+                "imagebuilder:CreateInfrastructureConfiguration",
+                "imagebuilder:DeleteImage",
+                "imagebuilder:DeleteComponent",
+                "imagebuilder:DeleteImageRecipe",
+                "imagebuilder:DeleteInfrastructureConfiguration",
+                "imagebuilder:DeleteDistributionConfiguration"
+            ],
+            "Resource": [
+                "arn:aws:imagebuilder:*:<AWS ACCOUNT ID>:image/parallelclusterimage-*",
+                "arn:aws:imagebuilder:*:<AWS ACCOUNT ID>:image-recipe/parallelclusterimage-*",
+                "arn:aws:imagebuilder:*:<AWS ACCOUNT ID>:component/parallelclusterimage-*",
+                "arn:aws:imagebuilder:*:<AWS ACCOUNT ID>:distribution-configuration/parallelclusterimage-*",
+                "arn:aws:imagebuilder:*:<AWS ACCOUNT ID>:infrastructure-configuration/parallelclusterimage-*"
+            ],
+            "Effect": "Allow",
+            "Sid": "ImageBuilder"
+        },
+        {
+            "Action": [
+                "s3:CreateBucket",
+                "s3:ListBucket",
+                "s3:ListBucketVersions"
+            ],
+            "Resource": [
+                "arn:aws:s3:::parallelcluster-*"
+            ],
+            "Effect": "Allow",
+            "Sid": "S3Bucket"
+        },
+        {
+            "Action": [
+                "sns:GetTopicAttributes",
+                "sns:TagResource",
+                "sns:CreateTopic",
+                "sns:Subscribe",
+                "sns:Publish",
+                "SNS:DeleteTopic",
+                "SNS:Unsubscribe"
+            ],
+            "Resource": [
+                "arn:aws:sns:*:<AWS ACCOUNT ID>:ParallelClusterImage-*"
+            ],
+            "Effect": "Allow",
+            "Sid": "SNS"
+        },
+        {
+            "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:GetObjectVersion",
+                "s3:DeleteObject",
+                "s3:DeleteObjectVersion"
+            ],
+            "Resource": [
+                "arn:aws:s3:::parallelcluster-*/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "S3Objects"
+        },
+        {
+            "Action": "iam:CreateServiceLinkedRole",
+            "Effect": "Allow",
+            "Resource": "arn:aws:iam::*:role/aws-service-role/imagebuilder.amazonaws.com/AWSServiceRoleForImageBuilder",
+            "Condition": {
+                "StringLike": {
+                    "iam:AWSServiceName": "imagebuilder.amazonaws.com"
+                }
+            }
+        }
+    ]
+}
