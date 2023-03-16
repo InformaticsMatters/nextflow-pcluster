@@ -10,9 +10,9 @@ fi
 REGION=$1
 ACCOUNT=$2
 
-for F in head-node image-builder instance privileged
+for F in EVERYTHING head-node image-builder instance privileged
 do
   sed 's/<REGION>/'"$REGION"'/' iam/${F}-policy.json > a.json
-  sed 's/<AWS ACCOUNT ID>/'"$ACCOUNT"'/' a.json > nf-${F}-policy.json
+  sed 's/<AWS ACCOUNT ID>/'"$ACCOUNT"'/' a.json > v3-${F}-policy.json
   rm a.json
 done

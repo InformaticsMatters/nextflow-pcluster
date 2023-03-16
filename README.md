@@ -84,7 +84,6 @@ Just continue to **Create role** and give it a name (like `nextflow-pcluster`).
 ...and set some convenient variables, that we'll use later.
 Namely the created user name and your AWS account ID: -
 
-    $ CLUSTER_ROLE_NAME=nextflow-pcluster
     $ CLUSTER_ACCOUNT_ID=000000000000
 
 We now create **Policies** in AWS and then attach them to the role.
@@ -96,31 +95,31 @@ We now create **Policies** in AWS and then attach them to the role.
 >   Copies of the policies exist in this repository along with a shell-script
     to rapidly adapt them for the user and cluster you're going to create.
 
+>   The `EVERYTHING-policy` is a combination of all the other policy files.
+    Which might be useful if you reach an IAM policy limit.
+
 Given a region (like `us-west-2`), user account ID, cluster name and a role name
 you can render the repository's copy of the reference policy files 
 using the following command: -
 
-    $ CLUSTER_NAME=nextflow
     $ ./render-policies.sh \
         ${AWS_DEFAULT_REGION} \
-        ${CLUSTER_ACCOUNT_ID} \
-        ${CLUSTER_NAME} \
-        ${CLUSTER_ROLE_NAME}
+        ${CLUSTER_ACCOUNT_ID}
 
 Now install each of the policies using the AWS CLI. The policy names
 you choose must be unique for your account: -
     
     $ aws iam create-policy \
         --policy-name NextflowClusterInstancePolicy \
-        --policy-document file://nf-instance-policy.json
+        --policy-document file://v3-instance-policy.json
     
     $ aws iam create-policy \
         --policy-name NextflowClusterUserPolicy \
-        --policy-document file://nf-user-policy.json
+        --policy-document file://v3-user-policy.json
 
     $ aws iam create-policy \
         --policy-name NextflowClusterOperatorPolicy \
-        --policy-document file://nf-operator-policy.json
+        --policy-document file://v3-operator-policy.json
 
 Now, again using the AWS CLI, attach the policies to your chosen AWS role: -
 

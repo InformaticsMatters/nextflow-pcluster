@@ -3,5 +3,6 @@ venv/
 cfg*
 config*
 nf-*-policy.json
+v3-*-policy.json
 .nextflow/
 .nextflow.*
