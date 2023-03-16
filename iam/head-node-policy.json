@@ -37,7 +37,7 @@
             "Action": [
                 "ec2:RunInstances",
                 "ec2:CreateFleet"
-            ]
+            ],
             "Resource": "*",
             "Effect": "Allow"
         },

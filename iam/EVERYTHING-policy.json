@@ -1,0 +1,467 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "s3:GetObject",
+                "s3:GetObjectVersion"
+            ],
+            "Resource": [
+                "arn:aws:s3:::<REGION>-aws-parallelcluster/*",
+                "arn:aws:s3:::dcv-license.<REGION>/*",
+                "arn:aws:s3:::parallelcluster-*-v1-do-not-delete/*"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:BatchWriteItem"
+            ],
+            "Resource": "arn:aws:dynamodb:<REGION>:<AWS ACCOUNT ID>:table/parallelcluster-*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "StringEquals": {
+                    "ec2:ResourceTag/parallelcluster:node-type": "Compute"
+                }
+            },
+            "Action": "ec2:TerminateInstances",
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "ec2:AllocateAddress",
+                "ec2:AssociateAddress",
+                "ec2:AttachNetworkInterface",
+                "ec2:AuthorizeSecurityGroupEgress",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:CreateFleet",
+                "ec2:CreateLaunchTemplate",
+                "ec2:CreateLaunchTemplateVersion",
+                "ec2:CreateNetworkInterface",
+                "ec2:CreatePlacementGroup",
+                "ec2:CreateSecurityGroup",
+                "ec2:CreateSnapshot",
+                "ec2:CreateTags",
+                "ec2:CreateVolume",
+                "ec2:DeleteLaunchTemplate",
+                "ec2:DeleteNetworkInterface",
+                "ec2:DeletePlacementGroup",
+                "ec2:DeleteSecurityGroup",
+                "ec2:DeleteVolume",
+                "ec2:DisassociateAddress",
+                "ec2:ModifyLaunchTemplate",
+                "ec2:ModifyNetworkInterfaceAttribute",
+                "ec2:ModifyVolume",
+                "ec2:ModifyVolumeAttribute",
+                "ec2:ReleaseAddress",
+                "ec2:RevokeSecurityGroupEgress",
+                "ec2:RevokeSecurityGroupIngress",
+                "ec2:RunInstances",
+                "ec2:TerminateInstances"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "StringEquals": {
+                    "iam:PassedToService": [
+                        "lambda.amazonaws.com",
+                        "ec2.amazonaws.com"
+                    ]
+                }
+            },
+            "Action": [
+                "iam:PassRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::<AWS ACCOUNT ID>:role/parallelcluster/*",
+                "arn:aws:iam::<AWS ACCOUNT ID>:instance-profile/parallelcluster/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "IAMPassRole"
+        },
+        {
+            "Action": [
+                "ec2:DescribeInstances",
+                "ec2:DescribeInstanceStatus",
+                "ec2:DescribeVolumes",
+                "ec2:DescribeInstanceAttribute",
+                "ec2:DescribeCapacityReservations"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "ec2:CreateTags",
+                "ec2:AttachVolume"
+            ],
+            "Resource": [
+                "arn:aws:ec2:<REGION>:<AWS ACCOUNT ID>:instance/*",
+                "arn:aws:ec2:<REGION>:<AWS ACCOUNT ID>:volume/*"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "cloudformation:*"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "CloudFormation"
+        },
+        {
+            "Action": [
+                "route53:ChangeResourceRecordSets"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "iam:CreateInstanceProfile",
+                "iam:DeleteInstanceProfile",
+                "iam:AddRoleToInstanceProfile",
+                "iam:GetRole",
+                "iam:GetRolePolicy",
+                "iam:GetInstanceProfile",
+                "iam:RemoveRoleFromInstanceProfile"
+            ],
+            "Resource": [
+                "arn:aws:iam::<AWS ACCOUNT ID>:instance-profile/parallelcluster/*",
+                "arn:aws:iam::<AWS ACCOUNT ID>:instance-profile/ParallelClusterImage*",
+                "arn:aws:iam::<AWS ACCOUNT ID>:role/parallelcluster/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "IAM"
+        },
+        {
+            "Action": [
+                "ec2:DescribeImages",
+                "ec2:DescribeInstanceTypeOfferings",
+                "ec2:DescribeInstanceTypes",
+                "ec2:DeregisterImage",
+                "ec2:DeleteSnapshot"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "EC2"
+        },
+        {
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:TagResource",
+                "logs:UntagResource",
+                "logs:DeleteLogGroup"
+            ],
+            "Resource": [
+                "arn:aws:logs:*:<AWS ACCOUNT ID>:log-group:/aws/imagebuilder/ParallelClusterImage-*",
+                "arn:aws:logs:*:<AWS ACCOUNT ID>:log-group:/aws/lambda/ParallelClusterImage-*"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "cloudwatch:PutDashboard",
+                "cloudwatch:ListDashboards",
+                "cloudwatch:DeleteDashboards",
+                "cloudwatch:GetDashboard"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "CloudWatch"
+        },
+        {
+            "Action": [
+                "cloudformation:DescribeStacks",
+                "cloudformation:CreateStack",
+                "cloudformation:DeleteStack"
+            ],
+            "Resource": [
+                "arn:aws:cloudformation:*:<AWS ACCOUNT ID>:stack/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "CloudFormation"
+        },
+        {
+            "Action": [
+                "lambda:CreateFunction",
+                "lambda:GetFunctionConfiguration",
+                "lambda:GetFunction",
+                "lambda:InvokeFunction",                
+                "lambda:AddPermission",
+                "lambda:RemovePermission",
+                "lambda:DeleteFunction",
+                "lambda:UpdateFunctionConfiguration",
+                "lambda:TagResource",
+                "lambda:ListTags",
+                "lambda:UntagResource"
+            ],
+            "Resource": [
+                "arn:aws:lambda:*:<AWS ACCOUNT ID>:function:ParallelClusterImage-*",
+                "arn:aws:lambda:*:<AWS ACCOUNT ID>:function:pcluster-*"
+            ],
+            "Effect": "Allow",
+            "Sid": "Lambda"
+        },
+        {
+            "Action": [
+                "imagebuilder:Get*"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "ImageBuilderGet"
+        },
+        {
+            "Action": [
+                "imagebuilder:CreateImage",
+                "imagebuilder:TagResource",
+                "imagebuilder:CreateImageRecipe",
+                "imagebuilder:CreateComponent",
+                "imagebuilder:CreateDistributionConfiguration",
+                "imagebuilder:CreateInfrastructureConfiguration",
+                "imagebuilder:DeleteImage",
+                "imagebuilder:DeleteComponent",
+                "imagebuilder:DeleteImageRecipe",
+                "imagebuilder:DeleteInfrastructureConfiguration",
+                "imagebuilder:DeleteDistributionConfiguration"
+            ],
+            "Resource": [
+                "arn:aws:imagebuilder:*:<AWS ACCOUNT ID>:image/parallelclusterimage-*",
+                "arn:aws:imagebuilder:*:<AWS ACCOUNT ID>:image-recipe/parallelclusterimage-*",
+                "arn:aws:imagebuilder:*:<AWS ACCOUNT ID>:component/parallelclusterimage-*",
+                "arn:aws:imagebuilder:*:<AWS ACCOUNT ID>:distribution-configuration/parallelclusterimage-*",
+                "arn:aws:imagebuilder:*:<AWS ACCOUNT ID>:infrastructure-configuration/parallelclusterimage-*"
+            ],
+            "Effect": "Allow",
+            "Sid": "ImageBuilder"
+        },
+        {
+            "Action": [
+                "s3:*"
+            ],
+            "Resource": [
+                "arn:aws:s3:::parallelcluster-*",
+                "arn:aws:s3:::aws-parallelcluster-*"
+            ],
+            "Effect": "Allow",
+            "Sid": "S3Bucket"
+        },
+        {
+            "Action": [
+                "sns:GetTopicAttributes",
+                "sns:TagResource",
+                "sns:CreateTopic",
+                "sns:Subscribe",
+                "sns:Publish",
+                "SNS:DeleteTopic",
+                "SNS:Unsubscribe"
+            ],
+            "Resource": [
+                "arn:aws:sns:*:<AWS ACCOUNT ID>:ParallelClusterImage-*"
+            ],
+            "Effect": "Allow",
+            "Sid": "SNS"
+        },
+        {
+            "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:GetObjectVersion",
+                "s3:DeleteObject",
+                "s3:DeleteObjectVersion"
+            ],
+            "Resource": [
+                "arn:aws:s3:::parallelcluster-*/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "S3Objects"
+        },
+        {
+            "Action": "iam:CreateServiceLinkedRole",
+            "Effect": "Allow",
+            "Resource": "arn:aws:iam::*:role/aws-service-role/imagebuilder.amazonaws.com/AWSServiceRoleForImageBuilder",
+            "Condition": {
+                "StringLike": {
+                    "iam:AWSServiceName": "imagebuilder.amazonaws.com"
+                }
+            }
+        },
+        {
+            "Action": [
+                "iam:CreateServiceLinkedRole",
+                "iam:DeleteRole",
+                "iam:TagRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::<AWS ACCOUNT ID>:role/parallelcluster/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "IamRole"
+        },
+        {
+            "Action": [
+                "iam:CreateRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::<AWS ACCOUNT ID>:role/parallelcluster/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "IamCreateRole"
+        },
+        {
+            "Action": [
+                "iam:PutRolePolicy",
+                "iam:DeleteRolePolicy"
+            ],
+            "Resource": "arn:aws:iam::<AWS ACCOUNT ID>:role/parallelcluster/*",
+            "Effect": "Allow",
+            "Sid": "IamInlinePolicy"
+        },
+        {
+            "Condition": {
+                "ArnLike": {
+                    "iam:PolicyARN": [
+                        "arn:aws:iam::<AWS ACCOUNT ID>:policy/parallelcluster*",
+                        "arn:aws:iam::<AWS ACCOUNT ID>:policy/parallelcluster/*",
+                        "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+                        "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+                        "arn:aws:iam::aws:policy/AWSBatchFullAccess",
+                        "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess",
+                        "arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole",
+                        "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role",
+                        "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+                        "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole",
+                        "arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilder",
+                        "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+                    ]
+                }
+            },
+            "Action": [
+                "iam:AttachRolePolicy",
+                "iam:DetachRolePolicy"
+            ],
+            "Resource": "arn:aws:iam::<AWS ACCOUNT ID>:role/parallelcluster/*",
+            "Effect": "Allow",
+            "Sid": "IamPolicy"
+        },
+        {
+            "Action": [
+                "dynamodb:DescribeTable",
+                "dynamodb:ListTagsOfResource",
+                "dynamodb:CreateTable",
+                "dynamodb:DeleteTable",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:Query",
+                "dynamodb:TagResource"
+            ],
+            "Resource": "arn:aws:dynamodb:*:<AWS ACCOUNT ID>:table/parallelcluster-*",
+            "Effect": "Allow",
+            "Sid": "DynamoDB"
+        },
+        {
+            "Action": [
+                "route53:ChangeResourceRecordSets",
+                "route53:ChangeTagsForResource",
+                "route53:CreateHostedZone",
+                "route53:DeleteHostedZone",
+                "route53:GetChange",
+                "route53:GetHostedZone",
+                "route53:ListResourceRecordSets",
+                "route53:ListQueryLoggingConfigs"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "Route53HostedZones"
+        },
+        {
+            "Action": [
+                "iam:GetRole",
+                "iam:GetRolePolicy",
+                "iam:GetPolicy",
+                "iam:SimulatePrincipalPolicy",
+                "iam:GetInstanceProfile"
+            ],
+            "Resource": [
+                "arn:aws:iam::<AWS ACCOUNT ID>:role/*",
+                "arn:aws:iam::<AWS ACCOUNT ID>:policy/*",
+                "arn:aws:iam::aws:policy/*",
+                "arn:aws:iam::<AWS ACCOUNT ID>:instance-profile/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "IamRead"
+        },
+        {
+            "Condition": {
+                "StringEqualsIfExists": {
+                    "iam:PassedToService": [
+                        "lambda.amazonaws.com",
+                        "ec2.amazonaws.com",
+                        "spotfleet.amazonaws.com"
+                    ]
+                }
+            },
+            "Action": [
+                "iam:PassRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::<AWS ACCOUNT ID>:role/parallelcluster/*"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "s3:Get*",
+                "s3:List*"
+            ],
+            "Resource": "arn:aws:s3:::*-aws-parallelcluster*",
+            "Effect": "Allow",
+            "Sid": "S3ParallelClusterReadOnly"
+        },
+        {
+            "Action": [
+                "elasticfilesystem:*"
+            ],
+            "Resource": [
+                "arn:aws:elasticfilesystem:*:<AWS ACCOUNT ID>:*"
+            ],
+            "Effect": "Allow",
+            "Sid": "EFS"
+        },
+        {
+            "Action": [
+                "logs:DeleteLogGroup",
+                "logs:PutRetentionPolicy",
+                "logs:DescribeLogGroups",
+                "logs:CreateLogGroup",
+                "logs:TagResource",
+                "logs:UntagResource",
+                "logs:FilterLogEvents",
+                "logs:GetLogEvents",
+                "logs:CreateExportTask",
+                "logs:DescribeLogStreams",
+                "logs:DescribeExportTasks"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "CloudWatchLogs"
+        },
+        {
+            "Action": [
+                "resource-groups:ListGroupResources"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "ResourceGroupRead"
+        }        
+    ]
+}
