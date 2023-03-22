@@ -98,7 +98,7 @@ We now create **Policies** in AWS and then attach them to the role.
 >   The `EVERYTHING-policy` is a combination of all the other policy files.
     Which might be useful if you reach an IAM policy limit.
 
-Given a region (like `us-west-2`), user account ID, cluster name and a role name
+Given a region (like `eu-central-1`), user account ID, cluster name and a role name
 you can render the repository's copy of the reference policy files 
 using the following command: -
 
@@ -205,13 +205,18 @@ With the preparation work done we're all set to configure and create a cluster.
 We use the `pcluster configure` command's interactive wizard to define our
 cluster.
 
+>   Here we're using a pre-created EFS filesystem
+    (see Amazon's [Creating EFS] documentation)
+    rather than relying in ParallelCluster to do this for us. By doing this
+    we can preserve workflow data between cluster instantiations.
+
 Here's a typical configuration file we end up with (with redacted data).
 Rather than use `pcluster configure` you can simply craft your own file.
 In the following we are using a pre-assigned EFS, one created using the AWS
 console: -
 
 ```yaml
-Region: us-west-2
+Region: eu-central-1
 Image:
   Os: alinux2
 Tags:
@@ -268,8 +273,9 @@ And list clusters with: -
 >   Allow 10 to 15 minutes for cluster formation to finish
 
 ## Mounting a pre-configured EFS on the bastion
-Assuming you've created a suitable EFS you can mount it on the bastion
-with the following commands, replacing `???` with values relevant to you: -
+Assuming you've created a suitable EFS (see Amazon's [Creating EFS] documentation)
+you can mount it on the bastion with the following commands,
+replacing `???` with values relevant to you: -
 
     $ sudo yum install -y amazon-efs-utils
     $ sudo yum -y install nfs-utils
@@ -346,13 +352,99 @@ Once you're done, if you no longer need the cluster, delete it: -
     console to make sure the stack responsible for the cluster has been
     deleted.
 
+## A custom cluster image
+ParallelCLuster's [ImageBuilder] is a tool to create custom images (AMIs) that you
+can use as the basis of your cluster's head and compute instances. This is especially
+useful if you find you're installing a lot of custom packages, which can slow down
+the formation of new compute nodes. By creating a custom image with all your
+application packages you can reduce the time taken for new nodes to become available.
+
+To do this you simply put your package configuration into a shell-script and store this
+in an Amazon S3 bucket. You then refer to this script in the ImageBuilder YAML-based
+configuration file.
+
+We've put our ParallelCluster v3 configuration file, which installs nextflow and
+singularity) into our public S3 bucket. We can then create a simple image builder
+file that refers to this script to create a custom image.
+
+Ours looks like this...
+
+```yaml
+---
+# A ParallelCluster v3 ImageBuilder configuration.
+# Used to compile custom images.
+#
+# This file is a TEMPLATE file, replace the `000[...]000` IDs with
+# values suitable for your environment.
+#
+# See https://docs.aws.amazon.com/parallelcluster/latest/ug/building-custom-ami-v3.html
+Build:
+  InstanceType: c6a.4xlarge
+  # A Parent Image to bass this one one.
+  # Here we're using a suitable Amazon Linux.
+  # You can use 'pcluster list-official-images' to find some.
+  ParentImage: ami-00000000000000000
+  # If you don't have a 'default VPC'
+  # you will need to provide a Subnet (and a SecurityGroup)
+  SubnetId: subnet-00000000000000000
+  SecurityGroupIds:
+  - sg-00000000000000000
+  # Components to add to the image.
+  # Here we're running our custom script (on S3)
+  # that installs nextflow and apptainer (singularity)
+  Components:
+  - Type: script
+    Value: s3://im-aws-parallel-cluster/imagebuilder-amazon.sh
+  # Allow the builder to access S3
+  Iam:
+    AdditionalIamPolicies:
+    - Policy: arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+  # Other stuff...
+  UpdateOsPackages:
+    Enabled: true
+``` 
+
+>   You can find a copy of the ImageBuilder YAML file in the `imagebuilder` directory
+    of this repository.
+    
+Then, if the above configuration is placed in the file `imagebuilder-nextflow.yaml`
+we can run the image builder and create a custom image: -
+
+    $ pcluster build-image \
+        --image-configuration imagebuilder-nextflow.yaml \
+        --image-id nextflow \
+        --region eu-central-1
+
+Building an Image building can take a substantial length of time (an hour or so)
+but you can track image build status using the following command: -
+
+    $ pcluster describe-image --image-id nextflow --region eu-central-1
+
+When the `imageBuildStatus` from the above command is `BUILD_COMPLETE` you should
+also find the image AMI under `ec2AmiInfo -> amiId`.
+
+You can now use this AMI in your cluster configuration and remove the
+corresponding `CustomActions`, which are no longer required, by placing the AMI
+in the `Image` block of your cluster configuration: -
+
+```yaml
+Image:
+  Os: alinux2
+  CustomAmi: ami-00000000000000000
+```
+
+Now, clusters built using this configuration should become available a little more
+quickly.
+
 ---
 
 [administratoraccess]: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html#aws-managed-policies
 [aws parallel cluster]: https://docs.aws.amazon.com/parallelcluster/index.html
+[creating efs]: https://docs.aws.amazon.com/efs/latest/ug/gs-step-two-create-efs-resources.html
 [documentation for the configuration file]: https://docs.aws.amazon.com/parallelcluster/latest/ug/cluster-configuration-file-v3.html
 [efs]: https://docs.aws.amazon.com/efs/latest/ug/mounting-fs.html
 [fragmentation workflow]: https://github.com/InformaticsMatters/fragmentor
+[image builder]: https://docs.aws.amazon.com/parallelcluster/latest/ug/building-custom-ami-v3.html
 [jq]: https://stedolan.github.io/jq/
 [nextflow]: https://www.nextflow.io/
 [parallelcluster policies]: https://docs.aws.amazon.com/parallelcluster/latest/ug/iam-roles-in-parallelcluster-v3.html

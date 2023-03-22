@@ -1,0 +1,32 @@
+---
+# A ParallelCluster v3 ImageBuilder configuration.
+# Used to compile custom images.
+#
+# This file is a TEMPLATE file, replace the `000[...]000` IDs with
+# values suitable for your environment.
+#
+# See https://docs.aws.amazon.com/parallelcluster/latest/ug/building-custom-ami-v3.html
+Build:
+  InstanceType: c6a.4xlarge
+  # A Parent Image to bass this one one.
+  # Here we're using a suitable Amazon Linux.
+  # You can use 'pcluster list-official-images' to find some.
+  ParentImage: ami-00000000000000000
+  # If you don't have a 'default VPC'
+  # you will need to provide a Subnet (and a SecurityGroup)
+  SubnetId: subnet-00000000000000000
+  SecurityGroupIds:
+  - sg-00000000000000000
+  # Components to add to the image.
+  # Here we're running our custom script (on S3)
+  # that installs nextflow and apptainer (singularity)
+  Components:
+  - Type: script
+    Value: s3://im-aws-parallel-cluster/imagebuilder-amazon.sh
+  # Allow the builder to access S3
+  Iam:
+    AdditionalIamPolicies:
+    - Policy: arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+  # Other stuff...
+  UpdateOsPackages:
+    Enabled: true
