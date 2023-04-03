@@ -353,7 +353,7 @@ Once you're done, if you no longer need the cluster, delete it: -
     deleted.
 
 ## A custom cluster image
-ParallelCLuster's [ImageBuilder] is a tool to create custom images (AMIs) that you
+ParallelCluster's [ImageBuilder] is a tool to create custom images (AMIs) that you
 can use as the basis of your cluster's head and compute instances. This is especially
 useful if you find you're installing a lot of custom packages, which can slow down
 the formation of new compute nodes. By creating a custom image with all your
@@ -444,7 +444,7 @@ quickly.
 [documentation for the configuration file]: https://docs.aws.amazon.com/parallelcluster/latest/ug/cluster-configuration-file-v3.html
 [efs]: https://docs.aws.amazon.com/efs/latest/ug/mounting-fs.html
 [fragmentation workflow]: https://github.com/InformaticsMatters/fragmentor
-[image builder]: https://docs.aws.amazon.com/parallelcluster/latest/ug/building-custom-ami-v3.html
+[imagebuilder]: https://docs.aws.amazon.com/parallelcluster/latest/ug/building-custom-ami-v3.html
 [jq]: https://stedolan.github.io/jq/
 [nextflow]: https://www.nextflow.io/
 [parallelcluster policies]: https://docs.aws.amazon.com/parallelcluster/latest/ug/iam-roles-in-parallelcluster-v3.html
