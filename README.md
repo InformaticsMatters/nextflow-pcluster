@@ -359,6 +359,10 @@ useful if you find you're installing a lot of custom packages, which can slow do
 the formation of new compute nodes. By creating a custom image with all your
 application packages you can reduce the time taken for new nodes to become available.
 
+>   To build custom images your chosen IAM user will need the
+    **image build pcluster user policy** described in the [ParallelCluster Policies]
+    section of the AWS documentation.
+
 To do this you simply put your package configuration into a shell-script and store this
 in an Amazon S3 bucket. You then refer to this script in the ImageBuilder YAML-based
 configuration file.
